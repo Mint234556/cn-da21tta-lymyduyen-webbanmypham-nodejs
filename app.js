@@ -17,7 +17,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.render('layouts/index'); // Đơn giản hóa đường dẫn
 });
-
+// Cấu hình thư mục tĩnh
+app.use(express.static('src/public'));
 
 const User = require('./src/models/User'); // Update the path
 
