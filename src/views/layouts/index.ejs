@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mint</title>
+    <link href="https://fonts.googleapis.com/css2?family=Satisfy&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans antialiased bg-gray-50">
+
+    <!-- Phần Đầu Trang -->
+    <header class="bg-white shadow-sm">
+        <nav class="flex items-center justify-between px-4 py-2 max-w-7xl mx-auto">
+            <ul class="flex space-x-6 text-gray-700 text-sm">
+                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Trang Chủ</a></li>
+                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Sản Phẩm</a></li>
+                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Đăng Ký</a></li>
+                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Đăng Nhập</a></li>
+                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Giỏ Hàng</a></li>
+            </ul>            
+            <a href="/" class="text-3xl" style="color: #485935;">MINT</a>
+            <div class="relative">
+                <input type="text" placeholder="Type and hit enter" class="border border-gray-300 rounded-full py-1 px-3 text-sm">
+                <span class="absolute right-3 top-1.5 text-gray-500">🔍</span>
+            </div>
+        </nav>
+    </header>
+
+
+   <!-- Phần Banner -->
+<section class="hero bg-cover bg-center text-center text-white" style="background-image: url('/images/banner.jpg');">
+    <div class="bg-black bg-opacity-50 py-10 px-4">
+        <h2 class="text-4xl font-bold mb-4">Cho Làn Da Bạn Muốn Cảm Nhận</h2>
+        <p class="text-lg mb-6">Bộ Sưu Tập Mới</p>
+        <button class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600 transition duration-300">Khám Phá Ngay</button>
+    </div>
+</section>
+    <!-- Phần Danh Mục -->
+    <section class="categories py-16 bg-gray-100">
+        <h3 class="text-center text-3xl font-semibold mb-10">Mua Sắm Theo Danh Mục</h3>
+        <div class="category-grid grid grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto px-4">
+            <div class="category text-center">
+                <img src="skincare.jpg" alt="Chăm sóc da" class="w-full h-40 object-cover rounded mb-2">
+                <p class="font-medium">Chăm Sóc Da</p>
+            </div>
+            <div class="category text-center">
+                <img src="bodycare.jpg" alt="Chăm sóc cơ thể" class="w-full h-40 object-cover rounded mb-2">
+                <p class="font-medium">Chăm Sóc Cơ Thể</p>
+            </div>
+            <div class="category text-center">
+                <img src="haircare.jpg" alt="Chăm sóc tóc" class="w-full h-40 object-cover rounded mb-2">
+                <p class="font-medium">Chăm Sóc Tóc</p>
+            </div>
+            <div class="category text-center">
+                <img src="accessories.jpg" alt="Phụ kiện" class="w-full h-40 object-cover rounded mb-2">
+                <p class="font-medium">Phụ Kiện</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phần Bán Chạy Nhất -->
+    <section class="bestsellers py-16">
+        <h3 class="text-center text-3xl font-semibold mb-10">Sản Phẩm Bán Chạy</h3>
+        <div class="product-grid grid grid-cols-2 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
+            <div class="product text-center bg-white rounded shadow p-4 hover:shadow-lg transition-shadow duration-300">
+                <img src="product1.jpg" alt="Sản phẩm 1" class="w-full h-40 object-cover rounded mb-4">
+                <p class="font-medium">Dầu Tẩy Trang Tự Nhiên</p>
+                <span class="text-green-500 font-semibold">200,000đ</span>
+            </div>
+            <div class="product text-center bg-white rounded shadow p-4 hover:shadow-lg transition-shadow duration-300">
+                <img src="product2.jpg" alt="Sản phẩm 2" class="w-full h-40 object-cover rounded mb-4">
+                <p class="font-medium">Sữa Rửa Mặt Dưỡng Ẩm</p>
+                <span class="text-green-500 font-semibold">350,000đ</span>
+            </div>
+            <!-- Thêm các sản phẩm khác nếu cần -->
+        </div>
+    </section>
+
+    <!-- Phần Chân Trang -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="footer-icons max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div><span class="text-xl">🚚</span><p>Miễn Phí Vận Chuyển</p></div>
+            <div><span class="text-xl">↩️</span><p>Đổi Trả</p></div>
+            <div><span class="text-xl">📞</span><p>Hỗ Trợ Trực Tuyến</p></div>
+            <div><span class="text-xl">💳</span><p>Thanh Toán Linh Hoạt</p></div>
+        </div>
+    </footer>
+
+</body>
+</html>

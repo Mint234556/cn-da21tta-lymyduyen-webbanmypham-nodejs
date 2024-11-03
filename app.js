@@ -15,8 +15,9 @@ app.set('views', path.join(__dirname, 'src', 'views')); // Thay đổi đường
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-    res.render('index'); // Render view index.ejs
+    res.render('layouts/index'); // Đơn giản hóa đường dẫn
 });
+
 
 const User = require('./src/models/User'); // Update the path
 

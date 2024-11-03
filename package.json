@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "nodemon src/bin/app.js"
+
   },
   "repository": {
     "type": "git",
@@ -33,5 +34,8 @@
     "mongoose": "^8.8.0",
     "mysql2": "^3.11.3",
     "sequelize": "^6.37.5"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.14"
   }
 }
