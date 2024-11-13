@@ -1,7 +1,6 @@
-// controllers/authController.js
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+// src/controllers/authController.js
+const bcrypt = require('bcryptjs');
+const User = require('../models/User'); // Đảm bảo đường dẫn chính xác
 
 // Hàm đăng ký
 exports.register = async (req, res) => {
