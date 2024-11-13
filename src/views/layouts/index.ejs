@@ -7,22 +7,41 @@
     <link href="https://fonts.googleapis.com/css2?family=Satisfy&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/js/register.js" defer></script>
+    <script src="/js/login.js" defer></script>
     <style>
         /* Ẩn modal mặc định */
-        #registerModal {
+        #registerModal,  #loginModal {
             display: none; /* Đảm bảo modal không hiển thị ban đầu */
         }
     </style>
     <script>
-        // Hàm mở modal
-        function openModal() {
-            document.getElementById('registerModal').style.display = 'flex'; // Căn giữa
-        }
+         // Hàm mở modal đăng ký
+    function openModal() {
+        document.getElementById('registerModal').style.display = 'flex';
+    }
 
-        // Hàm đóng modal
-        function closeModal() {
-            document.getElementById('registerModal').style.display = 'none';
+    // Hàm đóng modal đăng ký
+    function closeModal() {
+        document.getElementById('registerModal').style.display = 'none';
+    }
+
+    // Hàm mở modal đăng nhập
+    function openLoginModal() {
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            loginModal.style.display = 'flex'; // Hiển thị modal đăng nhập
+        } else {
+            console.error("Không tìm thấy modal đăng nhập với id 'loginModal'");
         }
+    }
+
+    // Hàm đóng modal đăng nhập
+    function closeLoginModal() {
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) {
+            loginModal.style.display = 'none'; // Ẩn modal đăng nhập
+        }
+    }
     </script>
 </head>
 <body class="font-sans antialiased bg-gray-50">
@@ -34,7 +53,7 @@
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]">Trang Chủ</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]">Sản Phẩm</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]" onclick="openModal()">Đăng Ký</a></li>
-                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Đăng Nhập</a></li>
+                <li><a href="#" class="text-[#485935] hover:text-[#485935]" onclick="openLoginModal()">Đăng Nhập</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]">Giỏ Hàng</a></li>
             </ul>            
             <a href="/" class="text-3xl" style="color: #485935;">MINT</a>
@@ -55,37 +74,55 @@
     </section>
 
     <!-- Modal Đăng Ký -->
-    <div id="registerModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-        <div class="bg-white rounded p-6 w-96">
-            <h3 class="text-xl font-semibold mb-4">Đăng Ký Tài Khoản</h3>
-            <form onsubmit="handleRegister(event)">
-                <div class="mb-4">
-                    <label for="username" class="block text-sm font-medium text-gray-700">Tên Đăng Nhập</label>
-                    <input type="text" id="username" name="username" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
-                </div>
-                <div class="mb-4">
-                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" id="email" name="email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
-                </div>
-                <div class="mb-4">
-                    <label for="password" class="block text-sm font-medium text-gray-700">Mật Khẩu</label>
-                    <input type="password" id="password" name="password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
-                </div>
-                <div class="mb-4">
-                    <label for="confirm-password" class="block text-sm font-medium text-gray-700">Xác Nhận Mật Khẩu</label>
-                    <input type="password" id="confirm-password" name="confirm-password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
-                </div>
-                <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition duration-300">Đăng Ký</button>
-            </form>
-            <button onclick="closeModal()" class="mt-4 text-red-500 hover:text-red-700">Đóng</button>
-
-            <!-- Thông báo thành công -->
-            <div id="successMessage" class="hidden mt-4 text-green-500 font-medium">
-                Đăng ký thành công!
+<div id="registerModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div class="bg-white rounded p-6 w-96">
+        <h3 class="text-xl font-semibold mb-4">Đăng Ký Tài Khoản</h3>
+        <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="mb-4">
+                <label for="username" class="block text-sm font-medium text-gray-700">Tên Đăng Nhập</label>
+                <input type="text" id="username" name="username" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
             </div>
+            <div class="mb-4">
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" name="email" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
+            </div>
+            <div class="mb-4">
+                <label for="password" class="block text-sm font-medium text-gray-700">Mật Khẩu</label>
+                <input type="password" id="password" name="password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
+            </div>
+            <div class="mb-4">
+                <label for="confirm-password" class="block text-sm font-medium text-gray-700">Xác Nhận Mật Khẩu</label>
+                <input type="password" id="confirm-password" name="confirm-password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50">
+            </div>
+            <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition duration-300">Đăng Ký</button>
+        </form>
+        <button onclick="closeModal()" class="mt-4 text-red-500 hover:text-red-700">Đóng</button>
+
+        <!-- Thông báo thành công -->
+        <div id="successMessage" class="hidden mt-4 text-green-500 font-medium">
+            Đăng ký thành công!
         </div>
     </div>
-
+</div>
+<!-- Modal Đăng Nhập -->
+<div id="loginModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden">
+    <div class="bg-white rounded p-6 w-96">
+        <h3 class="text-xl font-semibold mb-4">Đăng Nhập</h3>
+        <form onsubmit="handleLogin(event)">
+            <div class="mb-4">
+                <label for="login-username" class="block text-sm font-medium text-gray-700">Tên Đăng Nhập</label>
+                <input type="text" id="login-username" name="username" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            </div>
+            <div class="mb-4">
+                <label for="login-password" class="block text-sm font-medium text-gray-700">Mật Khẩu</label>
+                <input type="password" id="login-password" name="password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+            </div>
+            <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">Đăng Nhập</button>
+        </form>
+        <button onclick="closeLoginModal()" class="mt-4 text-red-500 hover:text-red-700">Đóng</button>
+        <div id="loginSuccessMessage" class="hidden mt-4 text-green-500 font-medium">Đăng nhập thành công!</div>
+    </div>
+</div>
     <!-- Phần Danh Mục -->
     <section class="categories py-16 bg-gray-100">
         <h3 class="text-center text-3xl font-semibold mb-10">Mua Sắm Theo Danh Mục</h3>
