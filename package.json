@@ -4,8 +4,8 @@
   "description": "Website ban my pham bang Nodejs",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon src/bin/app.js"
-
+    "start": "nodemon src/bin/app.js",
+    "dev": "nodemon app.js"
   },
   "repository": {
     "type": "git",

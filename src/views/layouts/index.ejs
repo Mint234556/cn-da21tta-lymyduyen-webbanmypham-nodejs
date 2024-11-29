@@ -50,28 +50,44 @@
     <header class="bg-white shadow-sm">
         <nav class="flex items-center justify-between px-4 py-2 max-w-7xl mx-auto">
             <ul class="flex space-x-6 text-gray-700 text-sm">
-                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Trang Chủ</a></li>
+                <li class="relative group">
+                    <a href="#" class="text-[#485935] hover:text-[#485935]">Trang Chủ</a>
+                    <ul class="absolute left-0 hidden group-hover:block bg-white shadow-md rounded mt-2 z-10">
+                        <!-- Liên kết tới trang quản lý người dùng -->
+                        <li>
+                            <a href="/users/user-management" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-200">
+                                Quản Lý Người Dùng
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]">Sản Phẩm</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]" onclick="openModal()">Đăng Ký</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]" onclick="openLoginModal()">Đăng Nhập</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]">Giỏ Hàng</a></li>
-            </ul>            
+            </ul>           
             <a href="/" class="text-3xl" style="color: #485935;">MINT</a>
             <div class="relative">
-                <input type="text" placeholder="Type and hit enter" class="border border-gray-300 rounded-full py-1 px-3 text-sm">
+                <input type="text" placeholder="Tìm kiếm" class="border border-gray-300 rounded-full py-1 px-3 text-sm">
                 <span class="absolute right-3 top-1.5 text-gray-500">🔍</span>
             </div>
         </nav>
-    </header>
 
    <!-- Phần Banner -->
-   <section class="hero bg-cover bg-center text-center text-white" style="background-image: url('/images/banner.jpg');">
-        <div class="bg-black bg-opacity-50 py-10 px-4">
-            <h2 class="text-4xl font-bold mb-4">Cho Làn Da Bạn Muốn Cảm Nhận</h2>
-            <p class="text-lg mb-6">Bộ Sưu Tập Mới</p>
-            <button class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600 transition duration-300">Khám Phá Ngay</button>
-        </div>
-    </section>
+<!-- Phần Banner -->
+<!-- Phần Banner -->
+<!-- Phần Banner -->
+<!-- Phần Banner -->
+<section class="hero bg-center bg-cover bg-no-repeat text-center text-white w-full" style="background-image: url('/images/banner.jpg');">
+    <div class="bg-black bg-opacity-50 py-10 px-4 max-w-[1600px] mx-auto">
+        <h2 class="text-4xl font-bold mb-4">Cho Làn Da Bạn Muốn Cảm Nhận</h2>
+        <p class="text-lg mb-6">Bộ Sưu Tập Mới</p>
+        <button class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600 transition duration-300">Khám Phá Ngay</button>
+    </div>
+</section>
+
+
+
 
     <!-- Modal Đăng Ký -->
 <div id="registerModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -128,41 +144,52 @@
         <h3 class="text-center text-3xl font-semibold mb-10">Mua Sắm Theo Danh Mục</h3>
         <div class="category-grid grid grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto px-4">
             <div class="category text-center">
-                <img src="skincare.jpg" alt="Chăm sóc da">
+                <img src="/images/skincare.jpg" alt="Chăm sóc da" class="w-full h-auto object-contain rounded mb-2">
                 <p class="font-medium">Chăm Sóc Da</p>
             </div>
             <div class="category text-center">
-                <img src="bodycare.jpg" alt="Chăm sóc cơ thể" class="w-full h-40 object-cover rounded mb-2">
+                <img src="/images/bodycare.jpg" alt="Chăm sóc cơ thể" class="w-full h-auto object-contain rounded mb-2">
                 <p class="font-medium">Chăm Sóc Cơ Thể</p>
             </div>
             <div class="category text-center">
-                <img src="haircare.jpg" alt="Chăm sóc tóc" class="w-full h-40 object-cover rounded mb-2">
+                <img src="/images/haircare.jpg" alt="Chăm sóc tóc" class="w-full h-auto object-contain rounded mb-2">
                 <p class="font-medium">Chăm Sóc Tóc</p>
             </div>
             <div class="category text-center">
-                <img src="accessories.jpg" alt="Phụ kiện" class="w-full h-40 object-cover rounded mb-2">
+                <img src="/images/accessories.jpg" alt="Phụ kiện" class="w-full h-auto object-contain rounded mb-2">
                 <p class="font-medium">Phụ Kiện</p>
             </div>
         </div>
     </section>
 
-    <!-- Phần Bán Chạy Nhất -->
-    <section class="bestsellers py-16">
-        <h3 class="text-center text-3xl font-semibold mb-10">Sản Phẩm Bán Chạy</h3>
-        <div class="product-grid grid grid-cols-2 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
-            <div class="product text-center bg-white rounded shadow p-4 hover:shadow-lg transition-shadow duration-300">
-                <img src="product1.jpg" alt="Sản phẩm 1" class="w-full h-40 object-cover rounded mb-4">
-                <p class="font-medium">Dầu Tẩy Trang Tự Nhiên</p>
-                <span class="text-green-500 font-semibold">200,000đ</span>
+<!-- Phần Bán Chạy Nhất -->
+<section class="bestsellers py-16">
+    <h3 class="text-center text-3xl font-semibold mb-10">Sản Phẩm Bán Chạy</h3>
+    <div class="product-grid grid grid-cols-2 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
+        <div class="product text-center bg-white rounded shadow p-6 hover:shadow-lg transition-shadow duration-300">
+            <div class="image-wrapper w-full h-64 overflow-hidden rounded mb-4">
+                <img src="/images/product1.jpg" alt="Sản phẩm 1" class="w-full h-full object-contain">
             </div>
-            <div class="product text-center bg-white rounded shadow p-4 hover:shadow-lg transition-shadow duration-300">
-                <img src="product2.jpg" alt="Sản phẩm 2" class="w-full h-40 object-cover rounded mb-4">
-                <p class="font-medium">Sữa Rửa Mặt Dưỡng Ẩm</p>
-                <span class="text-green-500 font-semibold">350,000đ</span>
-            </div>
-            <!-- Thêm các sản phẩm khác nếu cần -->
+            <p class="font-medium">Dầu Tẩy Trang </p>
+            <span class="text-green-500 font-semibold">155,000đ</span>
         </div>
-    </section>
+        <div class="product text-center bg-white rounded shadow p-6 hover:shadow-lg transition-shadow duration-300">
+            <div class="image-wrapper w-full h-64 overflow-hidden rounded mb-4">
+                <img src="/images/product2.jpg" alt="Sản phẩm 2" class="w-full h-full object-contain">
+            </div>
+            <p class="font-medium">Sữa Rửa Mặt </p>
+            <span class="text-green-500 font-semibold">195,000đ</span>
+        </div>
+        <!-- Sản phẩm chăm sóc tóc -->
+        <div class="product text-center bg-white rounded shadow p-6 hover:shadow-lg transition-shadow duration-300">
+            <div class="image-wrapper w-full h-64 overflow-hidden rounded mb-4">
+                <img src="/images/product3.jpg" alt="Chăm Sóc Tóc" class="w-full h-full object-contain">
+            </div>
+            <p class="font-medium">Dầu Gội </p>
+            <span class="text-green-500 font-semibold">395,000đ</span>
+        </div>
+    </div>
+</section>
 
     <!-- Phần Chân Trang -->
     <footer class="bg-gray-800 text-white py-8">

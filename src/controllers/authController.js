@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key'; // Lấy JWT
 // Hàm đăng ký
 exports.register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role = 'user' } = req.body; // Mặc định vai trò là 'user'
 
         // Kiểm tra nếu email hoặc tên đăng nhập đã được đăng ký
         const existingEmail = await User.findOne({ where: { email } });
@@ -26,7 +26,8 @@ exports.register = async (req, res) => {
         const newUser = await User.create({
             username,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            role // Lưu vai trò người dùng (user hoặc admin)
         });
 
         res.status(201).json({ message: 'Đăng ký thành công', user: newUser });
@@ -52,13 +53,19 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Tên đăng nhập hoặc mật khẩu không đúng' });
         }
 
-        // Tạo token cho người dùng
-        const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, {
-            expiresIn: '1h'
-        });
+        // Tạo token cho người dùng, bao gồm thông tin role
+        const token = jwt.sign(
+            { userId: user.id, username: user.username, role: user.role }, 
+            JWT_SECRET, 
+            { expiresIn: '1h' }
+        );
 
         // Trả về phản hồi đăng nhập thành công
-        res.status(200).json({ message: 'Đăng nhập thành công', token });
+        res.status(200).json({ 
+            message: 'Đăng nhập thành công', 
+            token, 
+            role: user.role // Gửi role để frontend xác định quyền
+        });
     } catch (error) {
         res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
     }
