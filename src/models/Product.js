@@ -1,29 +1,35 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db'); // Import sequelize từ db.js
+const { sequelize } = require('../config/db'); // Kết nối DB
+const Review = require('./Review'); // Quan hệ với bảng Review
 
 const Product = sequelize.define('Product', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     name: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: false
     },
     price: {
         type: DataTypes.FLOAT,
-        allowNull: false,
+        allowNull: false
     },
     description: {
         type: DataTypes.TEXT,
-        allowNull: true,
+        allowNull: true
     },
-    imageUrl: {
+    image: {
         type: DataTypes.STRING,
-        allowNull: true,
-    },
-    stock: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-    },
+        allowNull: true
+    }
 }, {
-    timestamps: true,
+    timestamps: true
 });
+
+// Thiết lập quan hệ giữa Product và Review
+Product.hasMany(Review, { foreignKey: 'productId' });
+Review.belongsTo(Product, { foreignKey: 'productId' });
 
 module.exports = Product;

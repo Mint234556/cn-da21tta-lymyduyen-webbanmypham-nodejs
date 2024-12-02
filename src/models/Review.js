@@ -1,27 +1,30 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db'); // Import sequelize
+const { Sequelize, DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db'); // Kết nối DB
 
-// Định nghĩa model Review
 const Review = sequelize.define('Review', {
-    productId: {
+    id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true
     },
     rating: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        validate: { min: 1, max: 5 },
     },
     comment: {
         type: DataTypes.TEXT,
-        allowNull: true,
+        allowNull: false,
     },
+    user: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    productId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    }
 }, {
-    timestamps: true,
+    timestamps: true
 });
 
 module.exports = Review;

@@ -21,24 +21,37 @@
 
 <section class="products py-16 bg-gray-100">
     <h3 class="text-center text-3xl font-semibold mb-10">Tất Cả Sản Phẩm</h3>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto px-4">
-        <!-- Ví dụ các sản phẩm -->
-        <div class="product bg-white shadow p-4 rounded">
-            <img src="/images/product1.jpg" alt="Sản phẩm 1" class="w-full h-auto rounded">
-            <h4 class="mt-2 text-lg font-semibold">Sản phẩm 1</h4>
-            <p class="text-green-500 font-medium">100,000đ</p>
-        </div>
-        <div class="product bg-white shadow p-4 rounded">
-            <img src="/images/product2.jpg" alt="Sản phẩm 2" class="w-full h-auto rounded">
-            <h4 class="mt-2 text-lg font-semibold">Sản phẩm 2</h4>
-            <p class="text-green-500 font-medium">200,000đ</p>
-        </div>
+    <div id="products-list" class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-7xl mx-auto px-4">
+        <!-- Sản phẩm sẽ được hiển thị ở đây -->
     </div>
 </section>
 
 <footer class="bg-gray-800 text-white py-8 text-center">
     <p>&copy; 2024 Mint. Tất cả các quyền được bảo lưu.</p>
 </footer>
+
+<script>
+    // Gọi API để lấy danh sách sản phẩm
+    fetch('/api/products')  // Đảm bảo API URL là đúng
+        .then(response => response.json())
+        .then(products => {
+            const productsList = document.getElementById('products-list');
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.classList.add('product', 'bg-white', 'shadow', 'p-4', 'rounded');
+                productCard.innerHTML = `
+                    <img src="/images/${product.image}" alt="${product.name}" class="w-full h-auto rounded">
+                    <h4 class="mt-2 text-lg font-semibold">${product.name}</h4>
+                    <p class="text-green-500 font-medium">${product.price.toLocaleString()}đ</p>
+                    <a href="/products/${product.id}" class="text-blue-500 hover:text-blue-700">Xem chi tiết</a>
+                `;
+                productsList.appendChild(productCard);
+            });
+        })
+        .catch(error => {
+            console.error('Lỗi khi lấy sản phẩm:', error);
+        });
+</script>
 
 </body>
 </html>

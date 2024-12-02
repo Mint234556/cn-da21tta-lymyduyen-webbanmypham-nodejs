@@ -42,6 +42,7 @@
             loginModal.style.display = 'none'; // Ẩn modal đăng nhập
         }
     }
+
     </script>
 </head>
 <body class="font-sans antialiased bg-gray-50">
@@ -66,28 +67,19 @@
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]" onclick="openLoginModal()">Đăng Nhập</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]">Giỏ Hàng</a></li>
             </ul>  
-            <nav class="bg-gray-800 p-4">
-                <div id="user-info" class="flex items-center space-x-4">
+            <nav class="bg-white p-2 rounded-lg shadow-sm max-w-md mx-auto mt-4">
+                <div id="user-info" class="flex items-center justify-between">
                     <!-- Hiển thị tên người dùng -->
-                    <span id="current-user" class="hidden text-green-500 font-semibold"></span>
+                    <span id="current-user" class="text-sm font-medium text-pastel-green hidden"></span>
             
                     <!-- Nút Đăng Xuất -->
-                    <button id="logoutButton" class="hidden text-red-500 hover:underline" onclick="handleLogout()">Đăng Xuất</button>
+                    <button id="logoutButton" class="text-xs font-semibold text-pastel-red border border-pastel-red rounded px-3 py-1 hover:bg-pastel-red hover:text-white transition hidden" onclick="handleLogout()">Đăng Xuất</button>
                 </div>
             </nav>
             
-                     
             <a href="/" class="text-3xl" style="color: #485935;">MINT</a>
-            <div class="relative">
-                <input type="text" placeholder="Tìm kiếm" class="border border-gray-300 rounded-full py-1 px-3 text-sm">
-                <span class="absolute right-3 top-1.5 text-gray-500">🔍</span>
-            </div>
         </nav>
 
-   <!-- Phần Banner -->
-<!-- Phần Banner -->
-<!-- Phần Banner -->
-<!-- Phần Banner -->
 <!-- Phần Banner -->
 <section class="hero bg-center bg-cover bg-no-repeat text-center text-white w-full" style="background-image: url('/images/banner.jpg');">
     <div class="bg-black bg-opacity-50 py-10 px-4 max-w-[1600px] mx-auto">
