@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const { getProducts, getProductDetails } = require('../controllers/productController');
 
-// Định nghĩa các route cho sản phẩm
-router.get('/', (req, res) => {
-    // Logic lấy danh sách sản phẩm
-});
+router.get('/', getProducts);
+router.get('/:id', getProductDetails);
 
 module.exports = router;

@@ -52,7 +52,7 @@
             <ul class="flex space-x-6 text-gray-700 text-sm">
                 <li class="relative group">
                     <a href="#" class="text-[#485935] hover:text-[#485935]">Trang Chủ</a>
-                    <ul class="absolute left-0 hidden group-hover:block bg-white shadow-md rounded mt-2 z-10">
+                    <ul class="absolute left-0 invisible group-hover:visible delay-150 bg-white shadow-md rounded mt-2 z-10">
                         <!-- Liên kết tới trang quản lý người dùng -->
                         <li>
                             <a href="/users/user-management" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-200">
@@ -61,11 +61,22 @@
                         </li>
                     </ul>
                 </li>
-                <li><a href="#" class="text-[#485935] hover:text-[#485935]">Sản Phẩm</a></li>
+                <li><a href="/products" class="text-[#485935] hover:text-[#485935]">Sản Phẩm</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]" onclick="openModal()">Đăng Ký</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]" onclick="openLoginModal()">Đăng Nhập</a></li>
                 <li><a href="#" class="text-[#485935] hover:text-[#485935]">Giỏ Hàng</a></li>
-            </ul>           
+            </ul>  
+            <nav class="bg-gray-800 p-4">
+                <div id="user-info" class="flex items-center space-x-4">
+                    <!-- Hiển thị tên người dùng -->
+                    <span id="current-user" class="hidden text-green-500 font-semibold"></span>
+            
+                    <!-- Nút Đăng Xuất -->
+                    <button id="logoutButton" class="hidden text-red-500 hover:underline" onclick="handleLogout()">Đăng Xuất</button>
+                </div>
+            </nav>
+            
+                     
             <a href="/" class="text-3xl" style="color: #485935;">MINT</a>
             <div class="relative">
                 <input type="text" placeholder="Tìm kiếm" class="border border-gray-300 rounded-full py-1 px-3 text-sm">

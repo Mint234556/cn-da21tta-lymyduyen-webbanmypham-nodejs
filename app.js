@@ -3,9 +3,15 @@ const { connectDB, sequelize } = require('./src/config/db');
 const dotenv = require('dotenv');
 const path = require('path');
 const bcrypt = require('bcryptjs'); // Thêm bcrypt
+const jwt = require('jsonwebtoken'); // Thêm jwt
 const User = require('./src/models/User'); // Import model User
 const userRoutes = require('./src/routes/userRoutes');
 const authRoutes = require('./src/routes/authRoutes'); // Import authRoutes
+const productRoutes = require('./src/routes/productRoutes'); // Import product routes
+const reviewRoutes = require('./src/routes/reviewRoutes'); // Import review routes
+const cartRoutes = require('./src/routes/cartRoutes'); // Import cart routes
+const cookieParser = require('cookie-parser');
+
 dotenv.config();
 connectDB();
 
@@ -14,6 +20,7 @@ const app = express();
 // Thiết lập middleware để phân tích dữ liệu từ form và JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Thiết lập view engine và đường dẫn tới các thư mục tĩnh
 app.set('view engine', 'ejs');
@@ -58,20 +65,65 @@ const createDefaultAdmin = async () => {
 // Gọi hàm tạo admin mặc định
 createDefaultAdmin();
 
+// Middleware kiểm tra token JWT
+app.use((req, res, next) => {
+    const token = req.cookies.authToken; // Lấy token từ cookie
+
+    if (!token) {
+        return next(); // Nếu không có token, tiếp tục xử lý yêu cầu
+    }
+
+    // Xác minh token
+    jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key', (err, decoded) => {
+        if (err) {
+            return next(); // Nếu token không hợp lệ, tiếp tục yêu cầu
+        }
+        req.user = decoded; // Lưu thông tin người dùng vào req.user
+        next();
+    });
+});
+
 // Route trang chủ
 app.get('/', (req, res) => {
     console.log('Rendering index page...');
-    res.render('layouts/index'); // File index.ejs
+    res.render('layouts/index', { user: req.user }); // Gửi thông tin người dùng nếu đã đăng nhập
 });
 
-// // Route hiển thị trang quản lý người dùng
-// app.get('/user-management', (req, res) => {
-//     res.render('layouts/usermanagement'); // Render trang usermanagement.ejs
-// });
+app.get('/products', (req, res) => {
+    res.render('layouts/products'); // Gửi tệp products.ejs
+});
 
 // Sử dụng các routes
 app.use('/auth', authRoutes); // Route đăng ký và đăng nhập
 app.use('/users', userRoutes); // Các tuyến liên quan đến người dùng
+app.use('/api/products', productRoutes); // Route quản lý sản phẩm
+app.use('/api/reviews', reviewRoutes); // Route quản lý đánh giá
+app.use('/api/cart', cartRoutes); // Route quản lý giỏ hàng
+
+const products = [
+    { id: 1, name: "Sản phẩm 1", price: "100,000", description: "Mô tả sản phẩm 1", image: "/images/product1.jpg" },
+    { id: 2, name: "Sản phẩm 2", price: "200,000", description: "Mô tả sản phẩm 2", image: "/images/product2.jpg" },
+    // Thêm sản phẩm khác
+];
+
+const reviews = [
+    { productId: 1, user: "Nguyen Van A", comment: "Sản phẩm rất tốt!" },
+    { productId: 1, user: "Tran Thi B", comment: "Hài lòng với chất lượng." },
+    // Đánh giá khác
+];
+
+// Route trang chi tiết sản phẩm
+app.get('/products/:id', (req, res) => {
+    const productId = parseInt(req.params.id);
+    const product = products.find(p => p.id === productId);
+    const productReviews = reviews.filter(r => r.productId === productId);
+
+    if (!product) {
+        return res.status(404).send("Sản phẩm không tồn tại");
+    }
+
+    res.render('layouts/productDetails', { product, reviews: productReviews });
+});
 
 // Middleware xử lý lỗi (đặt ở cuối các route)
 app.use((err, req, res, next) => {

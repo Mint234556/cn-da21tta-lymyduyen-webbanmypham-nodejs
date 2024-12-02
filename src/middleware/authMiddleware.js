@@ -9,8 +9,7 @@ const errorMessages = {
 
 // Middleware xác thực và phân quyền
 const authMiddleware = (roles = []) => (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.split(' ')[1]; // Lấy token từ header (Bearer token)
+    const token = req.cookies.authToken;
 
     if (!token) {
         if (req.accepts('html')) {

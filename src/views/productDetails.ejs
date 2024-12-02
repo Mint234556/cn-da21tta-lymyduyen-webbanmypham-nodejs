@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Sản Phẩm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans antialiased bg-gray-50">
+<header class="bg-white shadow-sm">
+    <nav class="flex items-center justify-between px-4 py-2 max-w-7xl mx-auto">
+        <a href="/" class="text-3xl" style="color: #485935;">MINT</a>
+        <a href="/products" class="text-[#485935] hover:text-[#485935]">Quay lại Sản Phẩm</a>
+    </nav>
+</header>
+
+<section class="product-detail py-16 bg-white max-w-7xl mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full h-auto rounded">
+        <div>
+            <h2 class="text-3xl font-semibold mb-4"><%= product.name %></h2>
+            <p class="text-green-500 text-2xl font-medium mb-4"><%= product.price %>đ</p>
+            <p class="text-gray-700 mb-6"><%= product.description %></p>
+            <button onclick="addToCart(<%= product.id %>)" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">Thêm vào giỏ hàng</button>
+        </div>
+    </div>
+    <div class="reviews mt-10">
+        <h3 class="text-2xl font-semibold mb-4">Đánh Giá</h3>
+        <% reviews.forEach(review => { %>
+            <div class="review bg-gray-100 p-4 rounded mb-4">
+                <p class="font-medium"><%= review.user %>:</p>
+                <p class="text-gray-600"><%= review.comment %></p>
+            </div>
+        <% }) %>
+    </div>
+</section>
+
+<script>
+    // Function để thêm sản phẩm vào giỏ hàng
+    function addToCart(productId) {
+        fetch('/api/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ productId: productId, quantity: 1 })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Sản phẩm đã được thêm vào giỏ hàng!');
+        })
+        .catch(error => {
+            alert('Lỗi khi thêm sản phẩm vào giỏ hàng!');
+            console.error(error);
+        });
+    }
+</script>
+</body>
+</html>
