@@ -1,12 +1,12 @@
 import { useRoutes, Navigate } from "react-router-dom";
-// import DashboardAdmin from "./pages/DashboardAdmin";
+import DashboardAdmin from "./pages/DashboardAdmin";
 
 const RouterAdmin = () => {
   const element = useRoutes([
-    // {
-    //   path: "/",
-    //   element: <DashboardAdmin />,
-    // },
+    {
+      path: "/",
+      element: <DashboardAdmin />,
+    },
 
     {
       path: "*",

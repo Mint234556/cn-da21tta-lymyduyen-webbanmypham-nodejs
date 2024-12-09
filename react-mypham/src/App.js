@@ -2,8 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import "./App.css";
 
-// import Header from "./share-view/header";
-// import Footer from "./share-view/footer";
 import GuardRoute from "./authentication/guardRoute";
 // import Navbar from "./share-view/navbar";
 import RouterView from "./web-view/router-view";
@@ -13,9 +11,11 @@ import UserRouter from "./user-view/router-user";
 // import HeaderUser from "./user-view/components/headerUser";
 
 import RouterAdmin from "./admin-view/router-admin";
-// import NavBarAdmin from "./admin-view/components/navBarAdmin";
+import NavBarAdmin from "./admin-view/components/navBarAdmin";
 // import HeaderAdmin from "./admin-view/components/headerAdmin";
 import { Grid } from "@mui/material";
+import Header from "./share-view/css/header";
+import Navbar from "./share-view/css/navbar";
 
 function App() {
   return (
@@ -31,11 +31,11 @@ function App() {
         <Router>
           <Routes>
             <Route path="/*" element={<MainLayout />} />
-
-            <Route
+            {/* <Route
               path="/admin/*"
               element={<GuardRoute element={AdminLayout} />}
-            />
+            />{" "} */}
+            <Route path="/admin/*" element={<AdminLayout />} />
             <Route path="/profile/*" element={<RouterUser />} />
             {/* <Route path="/admin/*" element={<RouterAdmin />} /> */}
           </Routes>
@@ -46,9 +46,8 @@ function App() {
 }
 const MainLayout = () => (
   <>
-    {/* <Header />
-    <Navbar /> */}
-
+    <Header />
+    <Navbar />{" "}
     <Routes>
       <Route path="/*" element={<RouterView />} />
     </Routes>
@@ -76,7 +75,7 @@ const AdminLayout = () => (
     {/* <HeaderAdmin /> */}
     <Grid container style={{ height: "100vh" }}>
       <Grid item xs={3} md={2.5}>
-        {/* <NavBarAdmin /> */}
+        <NavBarAdmin />
       </Grid>
       <Grid item xs={9} md={9}>
         <Routes>
