@@ -1,12 +1,25 @@
 const connection = require("../../config/database.js");
-
+const moment = require("moment");
 // Lấy danh sách sản phẩm
 const getSAN_PHAM = async (req, res) => {
   try {
-    // Thực hiện truy vấn lấy tất cả sản phẩm từ bảng SANPHAM
+    // Thực hiện truy vấn lấy tất cả sản phẩm và thông tin loại sản phẩm từ bảng SANPHAM và DANHMUCSANPHAM
     const [results] = await connection.execute(`
-      SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
+      SELECT 
+        SANPHAM.MASANPHAM, 
+        SANPHAM.MALOAISANPHAM, 
+        SANPHAM.TENSANPHAM, 
+        SANPHAM.MOTA AS MOTA_SANPHAM, 
+        SANPHAM.GIA, 
+        SANPHAM.SOLUONG, 
+        SANPHAM.HINHANHSANPHAM, 
+        SANPHAM.CREATED_AT_SP, 
+        SANPHAM.UPDATED_AT_SP,
+        SANPHAM.TRANGTHAISANPHAM,
+        DANHMUCSANPHAM.TENLOAISANPHAM
       FROM SANPHAM
+      INNER JOIN DANHMUCSANPHAM ON SANPHAM.MALOAISANPHAM = DANHMUCSANPHAM.MALOAISANPHAM
+      ORDER BY SANPHAM.CREATED_AT_SP DESC
     `);
 
     return res.status(200).json({
@@ -32,7 +45,7 @@ const getSAN_PHAM_Use_ById = async (req, res) => {
       `
       SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
       FROM SANPHAM
-      WHERE MASANPHAM = ? AND PRODUCT_STATUS = 'Đang hoạt động'
+      WHERE MASANPHAM = ? AND TRANGTHAISANPHAM = 'Đang hoạt động'
       `,
       [id] // Truyền id vào câu truy vấn
     );
@@ -65,7 +78,7 @@ const getSAN_PHAM_Use = async (req, res) => {
     const [results] = await connection.execute(`
       SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
       FROM SANPHAM
-      WHERE PRODUCT_STATUS = 'Đang hoạt động'
+      WHERE TRANGTHAISANPHAM = 'Đang hoạt động'
     `);
 
     return res.status(200).json({
@@ -101,7 +114,7 @@ const getSAN_PHAM_Search = async (req, res) => {
       `
       SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
       FROM SANPHAM
-      WHERE PRODUCT_STATUS = 'Đang hoạt động' 
+      WHERE TRANGTHAISANPHAM = 'Đang hoạt động' 
       AND (TENSANPHAM LIKE ? OR MOTA LIKE ? OR HINHANHSANPHAM LIKE ?)
       LIMIT 5
       `,
@@ -132,7 +145,7 @@ const getLatest2Products = async (req, res) => {
     const [results] = await connection.execute(`
       SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
       FROM SANPHAM
-      WHERE PRODUCT_STATUS = 'Đang hoạt động'
+      WHERE TRANGTHAISANPHAM = 'Đang hoạt động'
       ORDER BY CREATED_AT_SP DESC
       LIMIT 2
     `);
@@ -158,7 +171,7 @@ const get_5CheapestProducts = async (req, res) => {
     const [results] = await connection.execute(`
       SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
       FROM SANPHAM
-      WHERE PRODUCT_STATUS = 'Đang hoạt động'
+      WHERE TRANGTHAISANPHAM = 'Đang hoạt động'
       ORDER BY GIA ASC
       LIMIT 5
     `);
@@ -186,7 +199,7 @@ const getTop5BestSellingProducts = async (req, res) => {
              SUM(oi.QUANTITY) AS total_sold
       FROM SANPHAM sp
       JOIN ORDER_ITEMS oi ON sp.MASANPHAM = oi.PRODUCT_ID
-      WHERE sp.PRODUCT_STATUS = 'Đang hoạt động'
+      WHERE sp.TRANGTHAISANPHAM = 'Đang hoạt động'
       GROUP BY sp.MASANPHAM
       ORDER BY total_sold DESC
       LIMIT 5
@@ -215,7 +228,7 @@ const getTopExpensiveProducts = async (req, res) => {
              dm.TENLOAISANPHAM
       FROM SANPHAM sp
       JOIN DANHMUCSANPHAM dm ON sp.MALOAISANPHAM = dm.MALOAISANPHAM
-      WHERE sp.PRODUCT_STATUS = 'Đang hoạt động'
+      WHERE sp.TRANGTHAISANPHAM = 'Đang hoạt động'
       ORDER BY sp.GIA DESC
       LIMIT 5
     `);
@@ -237,22 +250,17 @@ const getTopExpensiveProducts = async (req, res) => {
 
 // Tạo sản phẩm mới
 const createSAN_PHAM = async (req, res) => {
-  const {
-    MALOAISANPHAM,
-    TENSANPHAM,
-    MOTA,
-    GIA,
-    SOLUONG,
-    HINHANHSANPHAM,
-    PRODUCT_STATUS,
-  } = req.body;
-
+  const { MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, TRANGTHAISANPHAM } =
+    req.body;
+  const HINHANHSANPHAM = req.file ? req.file.filename : null;
   try {
     // Thực hiện truy vấn INSERT để thêm sản phẩm mới vào bảng SANPHAM
     const [result] = await connection.execute(
       `
-      INSERT INTO SANPHAM (MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, PRODUCT_STATUS)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+     INSERT INTO SANPHAM 
+(MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP, TRANGTHAISANPHAM)
+VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?)
+
       `,
       [
         MALOAISANPHAM,
@@ -261,7 +269,7 @@ const createSAN_PHAM = async (req, res) => {
         GIA,
         SOLUONG,
         HINHANHSANPHAM,
-        PRODUCT_STATUS,
+        TRANGTHAISANPHAM,
       ]
     );
 
@@ -277,7 +285,7 @@ const createSAN_PHAM = async (req, res) => {
         GIA: GIA,
         SOLUONG: SOLUONG,
         HINHANHSANPHAM: HINHANHSANPHAM,
-        PRODUCT_STATUS: PRODUCT_STATUS,
+        TRANGTHAISANPHAM: TRANGTHAISANPHAM,
         CREATED_AT_SP: new Date().toISOString(), // Thêm thời gian tạo
         UPDATED_AT_SP: new Date().toISOString(), // Thêm thời gian cập nhật
       },
@@ -294,47 +302,45 @@ const createSAN_PHAM = async (req, res) => {
 
 // Cập nhật sản phẩm
 const updateSAN_PHAM = async (req, res) => {
-  const { MASANPHAM } = req.params; // Lấy MASANPHAM từ tham số URL
-  const {
-    MALOAISANPHAM,
-    TENSANPHAM,
-    MOTA,
-    GIA,
-    SOLUONG,
-    HINHANHSANPHAM,
-    PRODUCT_STATUS,
-  } = req.body;
-
+  const { id } = req.params; // Lấy MASANPHAM từ URL
+  const updatedFields = req.body;
+  const HINHANHSANPHAM = req.file ? req.file.filename : null;
+  const MASANPHAM = id;
   try {
-    // Thực hiện truy vấn UPDATE để cập nhật thông tin sản phẩm
+    // Nếu không có dữ liệu gửi lên để cập nhật
+    if (!MASANPHAM || Object.keys(updatedFields).length === 0) {
+      return res.status(400).json({
+        EM: "Dữ liệu cập nhật không hợp lệ",
+        EC: 0,
+        DT: [],
+      });
+    }
+
+    // Nếu có file ảnh, thêm vào danh sách các trường cần cập nhật
+    if (HINHANHSANPHAM) {
+      updatedFields.HINHANHSANPHAM = HINHANHSANPHAM;
+    }
+
+    // Thêm thời gian cập nhật vào trường động
+    updatedFields.UPDATED_AT_SP = moment().format("YYYY-MM-DD HH:mm:ss");
+    // Tạo câu truy vấn động
+    const updates = Object.keys(updatedFields)
+      .map((key) => `${key} = ?`) // Ghép các cặp `key = ?`
+      .join(", ");
+
+    const values = Object.values(updatedFields); // Giá trị tương ứng
+
+    // Thực hiện câu lệnh UPDATE
     const [result] = await connection.execute(
       `
       UPDATE SANPHAM 
-      SET 
-        MALOAISANPHAM = ?, 
-        TENSANPHAM = ?, 
-        MOTA = ?, 
-        GIA = ?, 
-        SOLUONG = ?, 
-        HINHANHSANPHAM = ?, 
-        PRODUCT_STATUS = ?,
-        UPDATED_AT_SP = ? 
+      SET ${updates} 
       WHERE MASANPHAM = ?
       `,
-      [
-        MALOAISANPHAM,
-        TENSANPHAM,
-        MOTA,
-        GIA,
-        SOLUONG,
-        HINHANHSANPHAM,
-        PRODUCT_STATUS,
-        new Date().toISOString(), // Cập nhật thời gian sửa đổi
-        MASANPHAM,
-      ]
+      [...values, MASANPHAM]
     );
 
-    // Kiểm tra nếu sản phẩm không tồn tại hoặc không có thay đổi
+    // Kiểm tra nếu không có dòng nào bị ảnh hưởng
     if (result.affectedRows === 0) {
       return res.status(404).json({
         EM: "Sản phẩm không tìm thấy hoặc không có thay đổi",
@@ -343,20 +349,13 @@ const updateSAN_PHAM = async (req, res) => {
       });
     }
 
-    // Trả về thông báo thành công
+    // Trả về kết quả thành công
     return res.status(200).json({
       EM: "Cập nhật sản phẩm thành công",
       EC: 1,
       DT: {
         MASANPHAM,
-        MALOAISANPHAM,
-        TENSANPHAM,
-        MOTA,
-        GIA,
-        SOLUONG,
-        HINHANHSANPHAM,
-        PRODUCT_STATUS,
-        UPDATED_AT_SP: new Date().toISOString(),
+        ...updatedFields, // Trả về thông tin đã cập nhật
       },
     });
   } catch (error) {
@@ -372,15 +371,15 @@ const updateSAN_PHAM = async (req, res) => {
 // Xóa sản phẩm
 
 const deleteSAN_PHAM = async (req, res) => {
-  const { MASANPHAM } = req.params; // Lấy MASANPHAM từ tham số URL
-
+  const { id } = req.params; // Lấy MASANPHAM từ tham số URL
+  console.log("MASANPHAM", id);
   try {
     // Bước 1: Lấy thông tin sản phẩm để lấy tên hình ảnh
     const [product] = await connection.execute(
       `
       SELECT HINHANHSANPHAM FROM SANPHAM WHERE MASANPHAM = ?
       `,
-      [MASANPHAM]
+      [id]
     );
 
     // Kiểm tra xem sản phẩm có tồn tại không
@@ -400,7 +399,7 @@ const deleteSAN_PHAM = async (req, res) => {
       `
       DELETE FROM SANPHAM WHERE MASANPHAM = ?
       `,
-      [MASANPHAM]
+      [id]
     );
 
     // Kiểm tra nếu không có sản phẩm nào bị xóa

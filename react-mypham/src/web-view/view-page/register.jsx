@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   TextField,
@@ -10,6 +10,7 @@ import {
   Checkbox,
 } from "@mui/material";
 import axios from "axios";
+import { enqueueSnackbar } from "notistack";
 import { ArrowBack } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import logo from "../../public/logo/favicon.png";
@@ -25,7 +26,7 @@ const RegisterForm = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-
+  const [IsOtpSent, setIsOtpSent] = useState(false);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -73,7 +74,54 @@ const RegisterForm = () => {
       setErrorMessage("Đã xảy ra lỗi khi đăng ký, vui lòng thử lại.");
     }
   };
+  const [otp, setOtp] = useState("");
+  const [countdown, setCountdown] = useState(0); // State to track countdown time
+  // Handle OTP send
 
+  const handleSendOtp = async () => {
+    if (countdown > 0) return; // Prevent sending OTP if countdown is active
+
+    try {
+      const response = await axios.post(`${api}/send-otp`, {
+        email: formData.email,
+      });
+      if (response.data.EC === 1) {
+        enqueueSnackbar(response.data.EM);
+        setCountdown(60); // Set countdown to 60 seconds
+        setIsOtpSent(true); // Mark OTP as sent
+      } else {
+        enqueueSnackbar(response.data.EM);
+      }
+    } catch (error) {}
+  };
+  //handle Check OTP
+  const handleCheckOtp = async () => {
+    try {
+      const response = await axios.post(`${api}/check-otp`, {
+        email: formData.email,
+        otp: otp,
+      });
+      if (response.data.EC === 1) {
+        enqueueSnackbar(response.data.EM);
+
+        handleRegister();
+      } else {
+        enqueueSnackbar(response.data.EM);
+      }
+    } catch (error) {}
+  };
+  // Start countdown timer
+  useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (countdown === 0) {
+      setIsOtpSent(false);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
   return (
     <Box
       sx={{

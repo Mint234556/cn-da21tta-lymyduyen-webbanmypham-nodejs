@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -12,83 +12,25 @@ import {
 } from "@mui/material";
 
 import img1 from "../../public/list-product/product-1.png";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ProductGrid = () => {
-  const products = [
-    {
-      id: 1,
-      image: img1,
-      title: "Son Môi Lì 2 In 1",
-      price: "350.000đ",
-      rating: 5,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    {
-      id: 2,
-      image: img1,
-      title: "Kem Dưỡng Da Ban Đêm",
-      price: "450.000đ",
-      rating: 4,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    {
-      id: 3,
-      image: img1,
-      title: "Phấn Nền BB Cream",
-      price: "390.000đ",
-      rating: 4,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    {
-      id: 4,
-      image: img1,
-      title: "Kem Dưỡng Mắt Ban Ngày",
-      price: "350.000đ",
-      rating: 4,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    {
-      id: 5,
-      image: img1,
-      title: "Sữa Rửa Mặt Dành Cho Da Nhạy Cảm",
-      price: "250.000đ",
-      rating: 4,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    {
-      id: 6,
-      image: img1,
-      title: "Mặt Nạ Dưỡng Ẩm",
-      price: "180.000đ",
-      rating: 4,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    {
-      id: 7,
-      image: img1,
-      title: "Nước Hoa Hương Thơm Dịu Nhẹ",
-      price: "800.000đ",
-      rating: 4,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    {
-      id: 8,
-      image: img1,
-      title: "Kem Chống Nắng SPF50+",
-      price: "450.000đ",
-      rating: 4,
-      sold: "2000+ đã bán",
-      installment: "0% Trả góp",
-    },
-    // Thêm sản phẩm khác theo định dạng này
-  ];
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const api = process.env.REACT_APP_URL_SERVER;
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+  // Fetch all products
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(`${api}/san-pham/use`);
+      setProducts(response.data.DT);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
 
   if (!Array.isArray(products) || products.length === 0) {
     return (
@@ -97,56 +39,91 @@ const ProductGrid = () => {
       </Typography>
     );
   }
+
+  const handleMoveSelectProducts = (id) => {
+    navigate(`/select-product/${id}`);
+  };
+
   return (
-    <Box sx={{ my: 4 }}>
+    <Box sx={{ my: 4, display: "flex", justifyContent: "center" }}>
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-
+          flexDirection: "column", // Thêm chiều dọc để căn giữa nội dung
+          justifyContent: "center",
+          alignItems: "center", // Căn giữa theo chiều ngang
           mb: 2,
+          width: "80%", // Đảm bảo phần tử con có đủ không gian để căn giữa
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: "bold" }}></Typography>
-        <Button variant="text" size="small">
-          Xem thêm &gt;
-        </Button>
-      </Box>
-      <Grid container spacing={2}>
-        {products.map((product) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-            <Card>
-              <CardMedia
-                component="img"
-                height="200"
-                image={product.image}
-                alt={product.title}
-              />
-              <CardContent>
-                <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                  {product.title}
-                </Typography>
-                <Typography variant="h6" color="error">
-                  {product.price}
-                </Typography>
-                <Stack direction="row" spacing={1} alignItems="center" mt={1}>
-                  <Rating value={product.rating} readOnly size="small" />
-                  <Typography variant="body2" color="textSecondary">
-                    ({product.rating})
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            width: "100%", // Đảm bảo có chiều rộng cho phần tử con
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: "bold" }}></Typography>
+          <Button variant="text" size="small">
+            Xem thêm &gt;
+          </Button>
+        </Box>
+        <Grid container spacing={2} justifyContent="center">
+          {" "}
+          {/* Căn giữa các items trong Grid */}
+          {products.slice(0, 8).map((product) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={product.MASANPHAM}>
+              <Card
+                sx={{ width: "90%" }}
+                onClick={() => handleMoveSelectProducts(product.MASANPHAM)}
+              >
+                {/* Hiển thị hình ảnh sản phẩm */}
+                <CardMedia
+                  component="img"
+                  height="160"
+                  image={`${api}/images/${product.HINHANHSANPHAM}`} // Đường dẫn ảnh sản phẩm
+                  alt={product.TENSANPHAM} // Tên sản phẩm làm thuộc tính alt
+                />
+
+                <CardContent>
+                  {/* Tên sản phẩm */}
+                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                    {product.TENSANPHAM}
                   </Typography>
-                </Stack>
-                <Typography variant="body2" color="textSecondary">
-                  {product.sold}
-                </Typography>
-                <Typography variant="body2" color="primary">
-                  {product.installment}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+
+                  {/* Giá sản phẩm */}
+                  <Typography variant="h6" color="error">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(product.GIA)}
+                  </Typography>
+
+                  {/* Số lượng còn lại */}
+                  <Typography variant="body2" color="textSecondary">
+                    Số lượng: {product.SOLUONG}
+                  </Typography>
+
+                  {/* Trạng thái sản phẩm */}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color:
+                        product.TRANGTHAISANPHAM === "Đang hoạt động"
+                          ? "green"
+                          : "red",
+                    }}
+                  >
+                    {product.TRANGTHAISANPHAM}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
     </Box>
   );
 };

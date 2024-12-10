@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Grid,
@@ -13,17 +13,39 @@ import {
   Link,
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
+import axios from "axios";
+import { useParams } from "react-router-dom";
 
 const ProductDetail = () => {
+  const { id } = useParams();
+  const [products, setProducts] = useState({});
+  const api = process.env.REACT_APP_URL_SERVER;
+
+  useEffect(() => {
+    if (id) {
+      fetchProductsByID();
+    }
+  }, [id]);
+
+  // Fetch product by ID
+  const fetchProductsByID = async () => {
+    try {
+      const response = await axios.get(`${api}/san-pham/use/${id}`);
+      setProducts(response.data.DT); // Lưu dữ liệu sản phẩm vào state
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 900, margin: "auto", padding: 3 }}>
       {/* Header with back button */}
-      <Grid container justifyContent="space-between" alignItems="center" mb={3}>
+      <Grid container justifyContent="left" alignItems="center" mb={3}>
         <IconButton sx={{ color: "#000" }}>
           <ArrowBack />
         </IconButton>
         <Typography variant="h6" sx={{ color: "#000", fontWeight: "bold" }}>
-          Serum Dưỡng Da Vitamin C
+          {products.TENSANPHAM || "Sản phẩm không tìm thấy"}
         </Typography>
         <Box />
       </Grid>
@@ -35,63 +57,66 @@ const ProductDetail = () => {
           <Card sx={{ maxWidth: 400 }}>
             <CardMedia
               component="img"
-              image="https://via.placeholder.com/400x400" // Bạn có thể thay URL này bằng ảnh thật
-              alt="Serum Dưỡng Da Vitamin C"
+              image={
+                products.HINHANHSANPHAM
+                  ? `${api}/images/${products.HINHANHSANPHAM}`
+                  : "https://via.placeholder.com/400x400"
+              }
+              alt={products.TENSANPHAM || "Sản phẩm không có tên"}
             />
           </Card>
         </Grid>
 
         {/* Product Info on the right */}
         <Grid item xs={12} md={6}>
+          {/* Product Price */}
           <Typography variant="h5" sx={{ color: "#d32f2f", marginBottom: 2 }}>
-            650.000 ₫
+            {products.GIA ? `${products.GIA} ₫` : "Giá sản phẩm"}
           </Typography>
           <Typography
             variant="body1"
             sx={{ color: "#757575", marginBottom: 2 }}
           >
-            Giá sản phẩm (Giá có thể thay đổi theo các chương trình khuyến mãi)
+            Giá sản phẩm (Giá có thể thay đổi theo ưu đãi)
           </Typography>
 
-          {/* Product Size Selection */}
-          <TextField
-            label="Chọn dung tích"
-            select
-            fullWidth
-            sx={{ marginBottom: 2, borderColor: "#d32f2f" }}
-            defaultValue={30}
-            SelectProps={{
-              native: true,
-            }}
-          >
-            {[30, 50, 100].map((size) => (
-              <option value={size} key={size}>
-                {size} ml
-              </option>
-            ))}
-          </TextField>
+          {/* Product Quantity */}
+          <Typography variant="body1" sx={{ marginBottom: 2 }}>
+            Số lượng: {products.SOLUONG || "Không có thông tin"}
+          </Typography>
 
           {/* Product Description */}
           <Typography variant="body2" sx={{ marginBottom: 2 }}>
-            Serum dưỡng da Vitamin C giúp làm sáng da, cải thiện làn da không
-            đều màu, đồng thời giảm thiểu sự xuất hiện của các đốm nâu và nếp
-            nhăn.
+            {products.MOTA || "Mô tả sản phẩm chưa có"}
           </Typography>
 
-          {/* Special Offers */}
+          {/* Product Status */}
+          <Typography
+            variant="body2"
+            sx={{ marginBottom: 2, color: "#757575" }}
+          >
+            Trạng thái:{" "}
+            {products.TRANGTHAISANPHAM === 1
+              ? "Đang hoạt động"
+              : "Ngừng hoạt động"}
+          </Typography>
+
+          {/* Category Info */}
           <Divider sx={{ marginBottom: 2 }} />
-          <Typography variant="h6" sx={{ color: "#d32f2f", marginBottom: 2 }}>
-            Ưu đãi đặc biệt:
+          <Typography variant="h6" sx={{ color: "#1976d2", marginBottom: 2 }}>
+            Thông tin danh mục:
           </Typography>
           <Typography variant="body2" sx={{ marginBottom: 1 }}>
-            Giảm 150.000 VNĐ cho đơn hàng từ 1 triệu VNĐ khi thanh toán qua
-            VBank hoặc Payoo.
+            Mã loại sản phẩm: {products.MALOAISANPHAM || "Không có thông tin"}
           </Typography>
           <Typography variant="body2" sx={{ marginBottom: 1 }}>
-            Giảm 50.000 VNĐ cho đơn hàng từ 500k khi thanh toán qua ví Momo.
+            Tên loại sản phẩm: {products.TENLOAISANPHAM || "Không có thông tin"}
+          </Typography>
+          <Typography variant="body2" sx={{ marginBottom: 1 }}>
+            Mô tả danh mục: {products.MOTA || "Không có thông tin"}
           </Typography>
 
-          {/* Add to Cart and Buy Now Buttons */}
+          {/* Buttons */}
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} sm={6}>
               <Button
@@ -125,12 +150,12 @@ const ProductDetail = () => {
         </Grid>
       </Grid>
 
-      {/* Footer with Store Info */}
+      {/* Footer */}
       <Divider sx={{ marginBottom: 2 }} />
       <Typography variant="body2" align="center">
-        Xem cửa hàng trên{" "}
+        Xem thêm sản phẩm tại{" "}
         <Link href="#" color="primary">
-          BeautyStore
+          Mỹ phẩm shop
         </Link>
       </Typography>
     </Box>

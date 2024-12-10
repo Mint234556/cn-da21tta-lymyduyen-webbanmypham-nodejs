@@ -7,7 +7,7 @@ import GuardRoute from "./authentication/guardRoute";
 import RouterView from "./web-view/router-view";
 
 import UserRouter from "./user-view/router-user";
-// import NavBarUser from "./user-view/components/navBarUser";
+import NavBarUser from "./user-view/components/navBarUser";
 // import HeaderUser from "./user-view/components/headerUser";
 
 import RouterAdmin from "./admin-view/router-admin";
@@ -44,6 +44,8 @@ function App() {
     </div>
   );
 }
+
+// Giao diện cơ bản
 const MainLayout = () => (
   <>
     <Header />
@@ -54,12 +56,13 @@ const MainLayout = () => (
     {/* <Footer /> */}
   </>
 );
+
 const RouterUser = () => (
   <>
     {/* <HeaderUser /> */}
     <Grid container style={{ height: "100vh" }}>
       <Grid item xs={3} md={2.5}>
-        {/* <NavBarUser /> */}
+        <NavBarUser />
       </Grid>
       <Grid item xs={9} md={9}>
         <Routes>

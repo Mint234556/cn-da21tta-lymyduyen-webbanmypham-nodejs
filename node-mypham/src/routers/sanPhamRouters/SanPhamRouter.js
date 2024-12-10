@@ -23,8 +23,8 @@ router.get("/use/", getSAN_PHAM_Use);
 router.get("/use/5best-selling", getTop5BestSellingProducts);
 router.get("/use/5best-expensive", getTopExpensiveProducts);
 
-router.post("/", uploads.single("images"), createSAN_PHAM);
-router.put("/:id", uploads.single("images"), updateSAN_PHAM);
+router.post("/", uploads.single("HINHANHSANPHAM"), createSAN_PHAM);
+router.put("/:id", uploads.single("HINHANHSANPHAM"), updateSAN_PHAM);
 router.delete("/:id", deleteSAN_PHAM);
 router.get("/use/:id", getSAN_PHAM_Use_ById);
 router.get("/search", getSAN_PHAM_Search);

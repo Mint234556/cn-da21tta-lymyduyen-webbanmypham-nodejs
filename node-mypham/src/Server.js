@@ -31,7 +31,7 @@ const userRoute = require("./routers/nguoiDungRouter/userRouters.js");
 
 //api products
 const sanPhamRoute = require("./routers/sanPhamRouters/SanPhamRouter.js");
-
+const danhMucSanPham = require("./routers/sanPhamRouters/categoriesRoute.js");
 //api thanh toán
 
 const donHangRoute = require("./routers/thanhToanRouter/donHangRouter.js");
@@ -43,6 +43,7 @@ const gioHangRoute = require("./routers/tuongTacUserRouter/gioHangRouter.js");
 app.use("/", userRoute);
 //
 app.use("/san-pham", sanPhamRoute);
+app.use("/danh-muc", danhMucSanPham);
 
 //
 app.use("/gio-hang/", gioHangRoute);

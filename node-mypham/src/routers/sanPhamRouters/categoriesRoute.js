@@ -3,26 +3,26 @@ const router = express.Router();
 
 // Import controller functions
 const {
-  getAllCategories,
-  getCategoryById,
-  createCategory,
-  updateCategory,
-  deleteCategory,
+  getAllDanhMucSanPham,
+  getDanhMucSanPhamById,
+  createDanhMucSanPham,
+  updateDanhMucSanPham,
+  deleteDanhMucSanPham,
 } = require("../../controllers/sanPhamController/categoriesController");
 
 // Lấy tất cả danh mục
-router.get("/categories", getAllCategories);
+router.get("/", getAllDanhMucSanPham);
 
 // Lấy danh mục theo ID
-router.get("/categories/:id", getCategoryById);
+router.get("/:id", getDanhMucSanPhamById);
 
 // Tạo mới một danh mục
-router.post("/categories", createCategory);
+router.post("/", createDanhMucSanPham);
 
 // Cập nhật thông tin danh mục
-router.put("/categories/:id", updateCategory);
+router.put("/:id", updateDanhMucSanPham);
 
 // Xóa danh mục
-router.delete("/categories/:id", deleteCategory);
+router.delete("/:id", deleteDanhMucSanPham);
 
 module.exports = router;

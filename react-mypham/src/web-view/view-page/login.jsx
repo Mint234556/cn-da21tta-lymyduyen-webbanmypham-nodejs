@@ -12,8 +12,10 @@ import {
 import axios from "axios";
 import { ArrowBack } from "@mui/icons-material";
 import Cookies from "js-cookie";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../../public/logo/favicon.png";
+import { login, setUserInfo } from "../../redux/authSlice";
+import { useDispatch } from "react-redux";
 const LoginForm = () => {
   const api = process.env.REACT_APP_URL_SERVER;
   const [email, setEmail] = useState("");
@@ -25,46 +27,38 @@ const LoginForm = () => {
   const handleEmailChange = (e) => setEmail(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
   const handleCheckboxChange = (e) => setIsChecked(e.target.checked);
-
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const handleLogin = async () => {
     try {
-      // Kiểm tra xem email và mật khẩu có bị trống không
+      // Kiểm tra email và mật khẩu
       if (!email || !password) {
         setErrorMessage("Email và mật khẩu không được để trống");
         return;
       }
 
-      // Reset thông báo
+      // Reset thông báo lỗi
       setErrorMessage("");
       setSuccessMessage("");
 
       // Gọi API đăng nhập
-      const response = await axios.post(`${api}/login`, {
-        email,
-        password,
-      });
-
+      const response = await axios.post(`${api}/login`, { email, password });
       const { EC, EM, DT } = response.data;
 
       if (EC === 1) {
         // Đăng nhập thành công
         setSuccessMessage(EM);
 
-        // Lưu token và thông tin người dùng vào Cookies
-        Cookies.set("accessToken", DT.accessToken, {
-          expires: 1, // Thời gian hết hạn (1 ngày)
-          secure: true, // Chỉ dùng trên kết nối HTTPS
-          sameSite: "strict", // Bảo vệ chống CSRF
-        });
+        // Dispatch action `login` từ Redux
+        dispatch(
+          login({
+            accessToken: DT.accessToken,
+            userInfo: DT.userInfo,
+          })
+        );
 
-        Cookies.set("userInfo", JSON.stringify(DT.userInfo), {
-          expires: 1, // Thời gian hết hạn
-          secure: true,
-          sameSite: "strict",
-        });
-
-        // Chuyển hướng sang trang dashboard (hoặc trang khác)
-        window.location.href = "/dashboard";
+        // Chuyển hướng sang trang dashboard hoặc trang khác
+        navigate("/");
       } else {
         // Hiển thị lỗi từ API
         setErrorMessage(EM);
@@ -133,12 +127,12 @@ const LoginForm = () => {
       />
 
       {/* Ghi nhớ tài khoản */}
-      <FormControlLabel
+      {/* <FormControlLabel
         control={
           <Checkbox checked={isChecked} onChange={handleCheckboxChange} />
         }
         label="Lưu tài khoản để tiện lợi hơn khi mua sắm"
-      />
+      /> */}
 
       {/* Nút Đăng nhập */}
       <Box mt={2}>

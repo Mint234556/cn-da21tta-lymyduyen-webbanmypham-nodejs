@@ -23,7 +23,7 @@ import ExpandMore from "@mui/icons-material/ExpandMore"; // Import đúng từ �
 import BarChartIcon from "@mui/icons-material/BarChart";
 import { Link, useLocation } from "react-router-dom";
 
-const NavBarAdmin = () => {
+const NavBarUser = () => {
   const [openSection, setOpenSection] = useState(null);
   const location = useLocation();
 
@@ -151,13 +151,13 @@ const NavBarAdmin = () => {
                 <ListItem
                   button
                   component={Link}
-                  to="/admin/san-pham"
+                  to="/admin/san-pham/them-san-pham"
                   sx={{
                     pl: 4,
                     color: "#1f1f1f",
                     borderRadius: "13px",
                     backgroundColor:
-                      location.pathname === "/admin/san-pham"
+                      location.pathname === "/admin/san-pham/them-san-pham"
                         ? "#8aad51"
                         : "transparent", // Kiểm tra nếu đang ở trang này
                     "&:hover": { backgroundColor: "#8aad51" },
@@ -169,13 +169,13 @@ const NavBarAdmin = () => {
                   <ListItem
                     button
                     component={Link}
-                    to="/admin/san-pham/danh-muc"
+                    to="/admin/san-pham/them-san-pham"
                     sx={{
                       pl: 4,
                       color: "#1f1f1f",
                       borderRadius: "13px",
                       backgroundColor:
-                        location.pathname === "/admin/san-pham/danh-muc"
+                        location.pathname === "/admin/san-pham/them-san-pham"
                           ? "#8aad51"
                           : "transparent", // Kiểm tra nếu đang ở trang này
                       "&:hover": { backgroundColor: "#8aad51" },
@@ -324,4 +324,4 @@ const NavBarAdmin = () => {
   );
 };
 
-export default NavBarAdmin;
+export default NavBarUser;

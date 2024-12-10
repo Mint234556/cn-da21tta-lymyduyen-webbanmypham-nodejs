@@ -522,19 +522,17 @@ const registerUser = async (req, res) => {
     email,
     fullName,
     phone,
-    ADDRESS_ = null, // Mặc định null nếu không có địa chỉ
-    USER_STATUS = "Đang hoạt động", // Mặc định trạng thái active
-    AVATAR_USER = null, // Mặc định không có avatar
-    VAITRO = "user", // Mặc định vai trò là user (bạn có thể thay đổi nếu cần)
+    ADDRESS_ = null, // Mặc định là null nếu không có địa chỉ
+    USER_STATUS = "Đang hoạt động", // Mặc định trạng thái là đang hoạt động
+    VAITRO = "user", // Mặc định vai trò là "user"
   } = req.body.formData;
 
-  const MANGUOIDUNG = email; // Giả sử `MANGUOIDUNG` là email
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10); // Mã hóa mật khẩu
 
   // Kiểm tra thông tin bắt buộc
-  if (!MANGUOIDUNG || !hashedPassword || !fullName || !phone) {
+  if (!hashedPassword || !fullName || !phone) {
     return res.status(400).json({
-      EM: "Missing required fields",
+      EM: "Thiếu các trường thông tin bắt buộc",
       EC: 0,
       DT: [],
     });
@@ -544,12 +542,12 @@ const registerUser = async (req, res) => {
     // Kiểm tra email đã tồn tại chưa
     const [existingUser] = await pool.query(
       `SELECT * FROM NGUOIDUNG WHERE EMAIL = ?`,
-      [MANGUOIDUNG]
+      [email]
     );
 
     if (existingUser.length > 0) {
       return res.status(400).json({
-        EM: "Tài khoản email này đã được đăng ký",
+        EM: "Email này đã được đăng ký",
         EC: 0,
         DT: [],
       });
@@ -558,33 +556,24 @@ const registerUser = async (req, res) => {
     // Đăng ký người dùng mới
     const [result] = await pool.query(
       `INSERT INTO NGUOIDUNG (
-        MANGUOIDUNG, TENNGUOIDUNG, EMAIL, DIACHI, SODIENTHOAI, MATKHAU, TRANGTHAINGUOIDUNG, VAITRO, CREATED_AT, UPDATED_AT
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [
-        MANGUOIDUNG,
-        fullName, // Tên người dùng
-        email,
-        ADDRESS_,
-        phone,
-        hashedPassword,
-        USER_STATUS, // Trạng thái người dùng (1: active)
-        VAITRO, // Vai trò người dùng (user, admin, v.v.)
-      ]
+       TENNGUOIDUNG, EMAIL, DIACHI, SODIENTHOAI, TRANGTHAINGUOIDUNG, MATKHAU, VAITRO
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [fullName, email, ADDRESS_, phone, USER_STATUS, hashedPassword, VAITRO]
     );
 
+    // Phản hồi khi đăng ký thành công
     return res.status(200).json({
       EM: "Đăng ký tài khoản thành công",
       EC: 1,
       DT: {
-        MANGUOIDUNG: result.insertId, // ID của người dùng vừa đăng ký
-        EMAIL: email,
         TENNGUOIDUNG: fullName,
+        EMAIL: email,
       },
     });
   } catch (error) {
     console.error("Error in register:", error);
     return res.status(500).json({
-      EM: `Error: ${error.message}`,
+      EM: `Đã xảy ra lỗi: ${error.message}`,
       EC: -1,
       DT: [],
     });
