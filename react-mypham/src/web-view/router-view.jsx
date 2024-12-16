@@ -4,6 +4,7 @@ import LoginForm from "./view-page/login";
 import RegisterForm from "./view-page/register";
 import Cart from "./view-page/cart";
 import ProductDetail from "./view-page/select-product";
+import ProductBrowser from "./view-page/productsBrowser";
 
 const RouterView = () => {
   const element = useRoutes([
@@ -28,7 +29,14 @@ const RouterView = () => {
       path: "/select-product/:id",
       element: <ProductDetail />,
     },
-
+    {
+      path: "/products/:categoryId",
+      element: <ProductBrowser />,
+    },
+    {
+      path: "/products",
+      element: <ProductBrowser />,
+    },
     {
       path: "*",
       element: <Navigate to="/contact" replace />,

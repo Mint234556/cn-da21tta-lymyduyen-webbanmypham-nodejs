@@ -162,7 +162,7 @@ const ProductManager = () => {
           color="primary"
           onClick={() => handleOpen()}
         >
-          Add Product
+          Thêm sản phẩm
         </Button>
       </Box>
 
@@ -237,7 +237,9 @@ const ProductManager = () => {
 
       {/* Dialog for Create/Edit */}
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{isEdit ? "Edit Product" : "Add Product"}</DialogTitle>
+        <DialogTitle>
+          {isEdit ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm"}
+        </DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="dense">
             <InputLabel>Danh mục sản phẩm</InputLabel>

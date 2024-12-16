@@ -101,14 +101,14 @@ const NavBarAdmin = () => {
             <ListItem
               button
               component={Link}
-              to="/admin"
+              to="/admin/nguoi-dung"
               sx={{
                 borderRadius: "12px",
                 color: "#1f1f1f",
                 cursor: "pointer",
                 userSelect: "none",
                 backgroundColor:
-                  location.pathname === "/nguoi-dung"
+                  location.pathname === "/admin/nguoi-dung"
                     ? "#8aad51"
                     : "transparent", // Kiểm tra nếu đang ở trang này
                 "&:hover": { backgroundColor: "#8aad51" },

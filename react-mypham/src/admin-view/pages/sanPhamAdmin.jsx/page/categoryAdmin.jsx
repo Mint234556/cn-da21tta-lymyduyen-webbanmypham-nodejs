@@ -31,6 +31,7 @@ const CategoryCRUD = () => {
   const [formData, setFormData] = useState({
     TENLOAISANPHAM: "",
     MOTA: "",
+    TRANG_THAI_DANH_MUC: "",
   });
 
   // Fetch categories
@@ -159,7 +160,19 @@ const CategoryCRUD = () => {
             value={formData.MOTA}
             onChange={handleChange}
             fullWidth
-          />
+          />{" "}
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Trạng thái</InputLabel>
+            <Select
+              name="TRANG_THAI_DANH_MUC"
+              value={formData.TRANG_THAI_DANH_MUC}
+              label="Trạng thái"
+              onChange={handleChange}
+            >
+              <MenuItem value="Đang hoạt động">Đang hoạt động</MenuItem>
+              <MenuItem value="Ngưng hoạt động">Ngưng hoạt động</MenuItem>
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
@@ -177,6 +190,7 @@ const CategoryCRUD = () => {
               <TableCell>ID</TableCell>
               <TableCell>Tên Danh Mục</TableCell>
               <TableCell>Mô tả</TableCell>
+              <TableCell>Trạng thái</TableCell>
               <TableCell>Hành động</TableCell>
             </TableRow>
           </TableHead>
@@ -185,7 +199,8 @@ const CategoryCRUD = () => {
               <TableRow key={category.MALOAISANPHAM}>
                 <TableCell>{category.MALOAISANPHAM}</TableCell>
                 <TableCell>{category.TENLOAISANPHAM}</TableCell>
-                <TableCell>{category.MOTA}</TableCell>
+                <TableCell>{category.MOTA}</TableCell>{" "}
+                <TableCell>{category.TRANG_THAI_DANH_MUC}</TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleEdit(category)}>
                     <Edit />

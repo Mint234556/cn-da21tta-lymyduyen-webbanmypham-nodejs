@@ -99,7 +99,7 @@ const getSAN_PHAM_Use = async (req, res) => {
 //Search theo sản phẩm
 const getSAN_PHAM_Search = async (req, res) => {
   const { query } = req.query; // Nhận từ khóa tìm kiếm từ frontend
-
+  console.log("query", query);
   if (!query) {
     return res.status(400).json({
       EM: "Vui lòng cung cấp từ khóa tìm kiếm",

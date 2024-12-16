@@ -29,7 +29,8 @@ router.post("/verify-admin", verifyAdmin);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
-router.put("/user/:id", updateUserById_User);
+router.put("/user/:id", upload.single("AVATAR"), updateUserById_User);
+
 router.put("/user/update", updateUserById_Admin);
 
 router.post("/update-password", updatePasswordUser);

@@ -12,7 +12,8 @@ import NavBarUser from "./user-view/components/navBarUser";
 
 import RouterAdmin from "./admin-view/router-admin";
 import NavBarAdmin from "./admin-view/components/navBarAdmin";
-// import HeaderAdmin from "./admin-view/components/headerAdmin";
+import HeaderAdmin from "./admin-view/components/headerAdmin";
+
 import { Grid } from "@mui/material";
 import Header from "./share-view/css/header";
 import Navbar from "./share-view/css/navbar";
@@ -75,7 +76,8 @@ const RouterUser = () => (
 
 const AdminLayout = () => (
   <>
-    {/* <HeaderAdmin /> */}
+    <HeaderAdmin />
+
     <Grid container style={{ height: "100vh" }}>
       <Grid item xs={3} md={2.5}>
         <NavBarAdmin />

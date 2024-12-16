@@ -2,6 +2,7 @@ import { useRoutes, Navigate } from "react-router-dom";
 import DashboardAdmin from "./pages/DashboardAdmin";
 import ProductManager from "./pages/sanPhamAdmin.jsx/page/sanPhamAdmin";
 import CategoryCRUD from "./pages/sanPhamAdmin.jsx/page/categoryAdmin";
+import UserManagement from "./pages/nguoiDungAdmin/page/nguoiDungAdmin";
 
 const RouterAdmin = () => {
   const element = useRoutes([
@@ -12,6 +13,10 @@ const RouterAdmin = () => {
     {
       path: "/san-pham",
       element: <ProductManager />,
+    },
+    {
+      path: "/nguoi-dung",
+      element: <UserManagement />,
     },
     {
       path: "/san-pham/danh-muc",

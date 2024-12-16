@@ -8,10 +8,12 @@ const {
   createDanhMucSanPham,
   updateDanhMucSanPham,
   deleteDanhMucSanPham,
+  getAllDanhMucSanPhamUse,
 } = require("../../controllers/sanPhamController/categoriesController");
 
 // Lấy tất cả danh mục
 router.get("/", getAllDanhMucSanPham);
+router.get("/use", getAllDanhMucSanPhamUse);
 
 // Lấy danh mục theo ID
 router.get("/:id", getDanhMucSanPhamById);

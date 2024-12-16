@@ -31,20 +31,30 @@ const getAllUser_Admin = async (req, res) => {
 const getUser_ById = async (req, res) => {
   try {
     const { id } = req.params;
-    // Check if the user already exists in the database
+    // Kiểm tra xem người dùng có tồn tại trong cơ sở dữ liệu không
 
     const [rows] = await pool.query(
-      "SELECT * FROM NGUOIDUNG where MANGUOIDUNG =? ",
+      "SELECT MANGUOIDUNG, TENNGUOIDUNG, EMAIL, DIACHI, SODIENTHOAI, TRANGTHAINGUOIDUNG, VAITRO, AVATAR FROM NGUOIDUNG WHERE MANGUOIDUNG = ?",
       [id]
     );
     const results = rows;
+
+    // Kiểm tra nếu không tìm thấy người dùng
+    if (results.length === 0) {
+      return res.status(404).json({
+        EM: "Không tìm thấy người dùng với ID này",
+        EC: 0,
+        DT: [],
+      });
+    }
+
     return res.status(200).json({
-      EM: "Lấy thông tin tất cả người dùng thành công",
+      EM: "Lấy thông tin người dùng thành công",
       EC: 1,
       DT: results,
     });
   } catch (error) {
-    console.error("Error in loginUserGoogle:", error);
+    console.error("Error in getUser_ById:", error);
     return res.status(500).json({
       EM: `Error: ${error.message}`,
       EC: -1,
@@ -124,7 +134,7 @@ const updateUserById_Admin = async (req, res) => {
 };
 
 const updateUserById_User = async (req, res) => {
-  const {
+  let {
     TENNGUOIDUNG,
     EMAIL,
     DIACHI,
@@ -132,9 +142,10 @@ const updateUserById_User = async (req, res) => {
     TRANGTHAINGUOIDUNG,
     MATKHAU,
     VAITRO,
+    CURRENT_PASSWORD,
   } = req.body;
 
-  const { id } = req.params; // MANGUOIDUNG
+  const { id } = req.params;
 
   if (!id) {
     return res.status(400).json({
@@ -145,7 +156,6 @@ const updateUserById_User = async (req, res) => {
   }
 
   try {
-    // Kiểm tra xem người dùng có tồn tại hay không
     const [existingUser] = await pool.execute(
       "SELECT * FROM NGUOIDUNG WHERE MANGUOIDUNG = ?",
       [id]
@@ -159,10 +169,43 @@ const updateUserById_User = async (req, res) => {
       });
     }
 
-    // Cập nhật các trường không phải null
+    const user = existingUser[0];
+
+    // Nếu có avatar mới, lưu đường dẫn vào cơ sở dữ liệu
+    let avatarUrl = user.AVATAR; // Giữ nguyên avatar cũ nếu không có avatar mới
+    if (req.file) {
+      avatarUrl = req.file.filename; // Cập nhật đường dẫn của ảnh
+    }
+
+    // Nếu cập nhật mật khẩu, cần kiểm tra mật khẩu hiện tại
+    if (MATKHAU) {
+      if (!CURRENT_PASSWORD) {
+        return res.status(400).json({
+          EM: "Mật khẩu hiện tại bị thiếu",
+          EC: 0,
+          DT: [],
+        });
+      }
+
+      const isPasswordCorrect = await bcrypt.compare(
+        CURRENT_PASSWORD,
+        user.MATKHAU
+      );
+      if (!isPasswordCorrect) {
+        return res.status(401).json({
+          EM: "Mật khẩu hiện tại không đúng",
+          EC: 0,
+          DT: [],
+        });
+      }
+
+      MATKHAU = await bcrypt.hash(MATKHAU, 10);
+    }
+
     let updateFields = [];
     let updateValues = [];
 
+    // Chỉ cập nhật thông tin nào có giá trị
     if (TENNGUOIDUNG) {
       updateFields.push("TENNGUOIDUNG = ?");
       updateValues.push(TENNGUOIDUNG);
@@ -192,6 +235,13 @@ const updateUserById_User = async (req, res) => {
       updateValues.push(VAITRO);
     }
 
+    // Cập nhật avatar nếu có
+    if (req.file) {
+      updateFields.push("AVATAR = ?");
+      updateValues.push(avatarUrl);
+    }
+
+    // Nếu không có thông tin nào để cập nhật
     if (updateFields.length === 0) {
       return res.status(400).json({
         EM: "Không có thông tin cần cập nhật",
@@ -200,7 +250,6 @@ const updateUserById_User = async (req, res) => {
       });
     }
 
-    // Cập nhật người dùng
     const updateQuery = `
       UPDATE NGUOIDUNG 
       SET ${updateFields.join(", ")}
@@ -218,7 +267,6 @@ const updateUserById_User = async (req, res) => {
       });
     }
 
-    // Trả về thông tin người dùng sau cập nhật
     const [updatedUser] = await pool.execute(
       "SELECT * FROM NGUOIDUNG WHERE MANGUOIDUNG = ?",
       [id]
@@ -271,6 +319,7 @@ const loginUserGoogle = async (req, res) => {
           SODIENTHOAI: user.SODIENTHOAI,
           TRANGTHAINGUOIDUNG: user.TRANGTHAINGUOIDUNG,
           VAITRO: user.VAITRO,
+          AVATAR: user.AVATAR,
         },
         JWT_SECRET,
         { expiresIn: "5h" }
@@ -298,6 +347,7 @@ const loginUserGoogle = async (req, res) => {
             SODIENTHOAI: user.SODIENTHOAI,
             TRANGTHAINGUOIDUNG: user.TRANGTHAINGUOIDUNG,
             VAITRO: user.VAITRO,
+            AVATAR: user.AVATAR,
           },
         },
       });
@@ -326,6 +376,7 @@ const loginUserGoogle = async (req, res) => {
           SODIENTHOAI: newUser.SODIENTHOAI,
           TRANGTHAINGUOIDUNG: newUser.TRANGTHAINGUOIDUNG,
           VAITRO: newUser.VAITRO,
+          AVATAR: newUser.AVATAR,
         },
         JWT_SECRET,
         { expiresIn: "5h" }
@@ -344,6 +395,7 @@ const loginUserGoogle = async (req, res) => {
             SODIENTHOAI: newUser.SODIENTHOAI,
             TRANGTHAINGUOIDUNG: newUser.TRANGTHAINGUOIDUNG,
             VAITRO: newUser.VAITRO,
+            AVATAR: newUser.AVATAR,
           },
         },
       });
@@ -416,6 +468,7 @@ const loginUser = async (req, res) => {
         SODIENTHOAI: user.SODIENTHOAI,
         TRANGTHAINGUOIDUNG: user.TRANGTHAINGUOIDUNG,
         VAITRO: user.VAITRO,
+        AVATAR: user.AVATAR,
       },
       JWT_SECRET,
       { expiresIn: "5h" }
@@ -435,6 +488,7 @@ const loginUser = async (req, res) => {
           SODIENTHOAI: user.SODIENTHOAI,
           TRANGTHAINGUOIDUNG: user.TRANGTHAINGUOIDUNG,
           VAITRO: user.VAITRO,
+          AVATAR: user.AVATAR,
         },
       },
     });

@@ -24,7 +24,7 @@ import { useDispatch } from "react-redux";
 import { logout } from "../../redux/authSlice"; // Action từ Redux slice
 import Cookies from "js-cookie";
 import axios from "axios";
-const Header = () => {
+const HeaderAdmin = () => {
   const { isAuthenticated, userInfo } = useSelector((state) => state.auth);
   const [anchorEl, setAnchorEl] = useState(null);
   const dispatch = useDispatch();
@@ -96,22 +96,9 @@ const Header = () => {
               style={{ width: "40px", marginTop: "10px" }}
             />
           </Typography>
-
-          <Link to="/" style={{ textDecoration: "none" }}>
-            <Button sx={{ color: "white" }}>Trang chủ</Button>
-          </Link>
-          <Link to="/products" style={{ textDecoration: "none" }}>
-            <Button sx={{ color: "white" }}>Sản phẩm</Button>
-          </Link>
         </Box>
 
         {/* Middle section: Phone number */}
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Phone sx={{ color: "white", marginRight: 1 }} />
-          <Typography variant="body2" sx={{ color: "white" }}>
-            1800 54 54 57
-          </Typography>
-        </Box>
 
         {/* Right section: User and Cart */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -167,25 +154,10 @@ const Header = () => {
               </IconButton>
             </>
           )}
-
-          <IconButton
-            component={Link} // Sử dụng Link làm component
-            to="/cart" // Đường dẫn đến trang tài khoản
-            sx={{
-              color: "white",
-              textDecoration: "none", // Xóa underline mặc định của Link
-            }}
-          >
-            <Storefront />
-            <Typography variant="body2" sx={{ marginLeft: 1 }}>
-              Giỏ Hàng
-            </Typography>
-            <Badge badgeContent={0} color="error" />
-          </IconButton>
         </Box>
       </Toolbar>
     </AppBar>
   );
 };
 
-export default Header;
+export default HeaderAdmin;

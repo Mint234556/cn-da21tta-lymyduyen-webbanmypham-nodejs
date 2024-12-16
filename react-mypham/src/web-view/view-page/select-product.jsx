@@ -14,13 +14,13 @@ import {
 } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const ProductDetail = () => {
   const { id } = useParams();
   const [products, setProducts] = useState({});
   const api = process.env.REACT_APP_URL_SERVER;
-
+  const navigate = useNavigate();
   useEffect(() => {
     if (id) {
       fetchProductsByID();
@@ -37,11 +37,16 @@ const ProductDetail = () => {
     }
   };
 
+  // Hàm xử lý quay lại
+  const handleBack = () => {
+    navigate(-1); // Điều hướng về route trước
+  };
+
   return (
     <Box sx={{ maxWidth: 900, margin: "auto", padding: 3 }}>
       {/* Header with back button */}
       <Grid container justifyContent="left" alignItems="center" mb={3}>
-        <IconButton sx={{ color: "#000" }}>
+        <IconButton sx={{ color: "#000" }} onClick={handleBack}>
           <ArrowBack />
         </IconButton>
         <Typography variant="h6" sx={{ color: "#000", fontWeight: "bold" }}>

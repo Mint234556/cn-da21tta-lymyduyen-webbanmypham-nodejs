@@ -77,14 +77,14 @@ const NavBarUser = () => {
           <ListItem
             button
             component={Link}
-            to="/admin"
+            to="/profile"
             sx={{
               borderRadius: "12px",
               color: "#1f1f1f",
               cursor: "pointer",
               userSelect: "none",
               backgroundColor:
-                location.pathname === "/admin" ? "#8aad51" : "transparent", // Kiểm tra nếu đang ở trang này
+                location.pathname === "/profile" ? "#8aad51" : "transparent", // Kiểm tra nếu đang ở trang này
               "&:hover": { backgroundColor: "#8aad51" },
             }}
           >
@@ -93,100 +93,10 @@ const NavBarUser = () => {
               <BarChartIcon sx={{ color: "#1f1f1f" }} />
             </ListItemIcon>
 
-            <ListItemText primary="Thống kê cơ bản" />
+            <ListItemText primary="Thông tin" />
           </ListItem>
           {/* //----------------------- */}
           <List>
-            {/* Quản lý người dùng */}
-            <ListItem
-              button
-              component={Link}
-              to="/admin"
-              sx={{
-                borderRadius: "12px",
-                color: "#1f1f1f",
-                cursor: "pointer",
-                userSelect: "none",
-                backgroundColor:
-                  location.pathname === "/nguoi-dung"
-                    ? "#8aad51"
-                    : "transparent", // Kiểm tra nếu đang ở trang này
-                "&:hover": { backgroundColor: "#8aad51" },
-              }}
-            >
-              <ListItemIcon>
-                {" "}
-                <BarChartIcon sx={{ color: "#1f1f1f" }} />
-              </ListItemIcon>
-
-              <ListItemText primary="Quản lý người dùng" />
-            </ListItem>
-
-            {/* Quản lý sản phẩm */}
-            <ListItem
-              button
-              onClick={() => toggleSection("sanPham")}
-              sx={{
-                borderRadius: "12px",
-                color: "#1f1f1f",
-                cursor: "pointer",
-                userSelect: "none",
-              }}
-            >
-              <ListItemIcon>
-                <InventoryIcon sx={{ color: "#1f1f1f" }} />
-              </ListItemIcon>
-              <ListItemText
-                primary="Quản lý sản phẩm"
-                sx={{ color: "#1f1f1f" }}
-              />
-              {openSection === "sanPham" ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
-            <Collapse
-              in={openSection === "sanPham"}
-              timeout="auto"
-              unmountOnExit
-            >
-              <List component="div" disablePadding>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/admin/san-pham/them-san-pham"
-                  sx={{
-                    pl: 4,
-                    color: "#1f1f1f",
-                    borderRadius: "13px",
-                    backgroundColor:
-                      location.pathname === "/admin/san-pham/them-san-pham"
-                        ? "#8aad51"
-                        : "transparent", // Kiểm tra nếu đang ở trang này
-                    "&:hover": { backgroundColor: "#8aad51" },
-                  }}
-                >
-                  <ListItemText primary="Thêm sản phẩm" />
-                </ListItem>{" "}
-                <List>
-                  <ListItem
-                    button
-                    component={Link}
-                    to="/admin/san-pham/them-san-pham"
-                    sx={{
-                      pl: 4,
-                      color: "#1f1f1f",
-                      borderRadius: "13px",
-                      backgroundColor:
-                        location.pathname === "/admin/san-pham/them-san-pham"
-                          ? "#8aad51"
-                          : "transparent", // Kiểm tra nếu đang ở trang này
-                      "&:hover": { backgroundColor: "#8aad51" },
-                    }}
-                  >
-                    <ListItemText primary="Danh mục sản phẩm" />
-                  </ListItem>{" "}
-                </List>
-              </List>
-            </Collapse>
-
             {/* Quản lý đơn hàng */}
             <ListItem
               button
