@@ -15,7 +15,7 @@ import img1 from "../../public/list-product/product-1.png";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const ProductGrid = () => {
+const ProductGrid = ({ apiURL, title }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const api = process.env.REACT_APP_URL_SERVER;
@@ -25,7 +25,7 @@ const ProductGrid = () => {
   // Fetch all products
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${api}/san-pham/use`);
+      const response = await axios.get(`${apiURL}`);
       setProducts(response.data.DT);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -56,6 +56,11 @@ const ProductGrid = () => {
           width: "80%", // Đảm bảo phần tử con có đủ không gian để căn giữa
         }}
       >
+        {" "}
+        <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+          {" "}
+          {title}
+        </Typography>
         <Box
           sx={{
             display: "flex",
@@ -66,7 +71,11 @@ const ProductGrid = () => {
           }}
         >
           <Typography variant="h6" sx={{ fontWeight: "bold" }}></Typography>
-          <Button variant="text" size="small">
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => navigate("/products")}
+          >
             Xem thêm &gt;
           </Button>
         </Box>

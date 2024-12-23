@@ -69,7 +69,7 @@ const LoginForm = () => {
       setErrorMessage("Đã xảy ra lỗi khi đăng nhập, vui lòng thử lại.");
     }
   };
-
+  const handleToBack = () => {};
   return (
     <Box
       sx={{
@@ -96,14 +96,12 @@ const LoginForm = () => {
           style={{ width: "80px" }}
         />
       </Grid>
-
       <Typography variant="h6" align="center" gutterBottom>
         Chào mừng trở lại!
       </Typography>
       <Typography variant="body2" align="center" color="textSecondary" mb={3}>
         Vui lòng đăng nhập để tiếp tục trải nghiệm những sản phẩm tuyệt vời!
       </Typography>
-
       {/* Trường Email */}
       <TextField
         label="Email"
@@ -114,7 +112,6 @@ const LoginForm = () => {
         type="email"
         sx={{ marginBottom: 2 }}
       />
-
       {/* Trường Mật khẩu */}
       <TextField
         label="Mật khẩu"
@@ -125,7 +122,6 @@ const LoginForm = () => {
         type="password"
         sx={{ marginBottom: 2 }}
       />
-
       {/* Ghi nhớ tài khoản */}
       {/* <FormControlLabel
         control={
@@ -133,7 +129,6 @@ const LoginForm = () => {
         }
         label="Lưu tài khoản để tiện lợi hơn khi mua sắm"
       /> */}
-
       {/* Nút Đăng nhập */}
       <Box mt={2}>
         <Button
@@ -152,9 +147,7 @@ const LoginForm = () => {
           Đăng Nhập
         </Button>
       </Box>
-
       {/* Lợi ích */}
-
       <Box mt={3} textAlign="center">
         <Typography variant="body2" color="textSecondary">
           Bạn chưa có tài khoản?
@@ -167,6 +160,17 @@ const LoginForm = () => {
           sx={{ fontWeight: "bold", textTransform: "none" }}
         >
           Đăng ký ngay
+        </Button>
+      </Box>{" "}
+      <Box mt={3} textAlign="center">
+        <Button
+          variant="text"
+          color="primary"
+          component={Link} // Sử dụng Link component
+          to="/forget-password" // Đường dẫn đến trang đăng ký
+          sx={{ fontWeight: "bold", textTransform: "none" }}
+        >
+          Quên mật khâu
         </Button>
       </Box>
     </Box>

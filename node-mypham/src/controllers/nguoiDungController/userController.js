@@ -5,6 +5,9 @@ const fs = require("fs");
 const path = require("path");
 const dayjs = require("dayjs");
 
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
+const otpStorage = new Map();
 const bcrypt = require("bcrypt");
 
 const getAllUser_Admin = async (req, res) => {
@@ -531,7 +534,7 @@ const verifyAdmin = async (req, res) => {
       const user = rows[0];
 
       // Kiểm tra trạng thái tài khoản và vai trò
-      if (user.TRANGTHAINGUOIDUNG === -1) {
+      if (user.TRANGTHAINGUOIDUNG === "Ngưng hoạt động") {
         return res.status(403).json({
           EM: "Tài khoản bị khóa",
           EC: 403,
@@ -576,7 +579,7 @@ const registerUser = async (req, res) => {
     email,
     fullName,
     phone,
-    ADDRESS_ = null, // Mặc định là null nếu không có địa chỉ
+    address = null, // Mặc định là null nếu không có địa chỉ
     USER_STATUS = "Đang hoạt động", // Mặc định trạng thái là đang hoạt động
     VAITRO = "user", // Mặc định vai trò là "user"
   } = req.body.formData;
@@ -612,7 +615,7 @@ const registerUser = async (req, res) => {
       `INSERT INTO NGUOIDUNG (
        TENNGUOIDUNG, EMAIL, DIACHI, SODIENTHOAI, TRANGTHAINGUOIDUNG, MATKHAU, VAITRO
       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [fullName, email, ADDRESS_, phone, USER_STATUS, hashedPassword, VAITRO]
+      [fullName, email, address, phone, USER_STATUS, hashedPassword, VAITRO]
     );
 
     // Phản hồi khi đăng ký thành công
@@ -640,8 +643,8 @@ const logoutUser = (req, res) => {
 };
 
 const updatePasswordUser = async (req, res) => {
-  const { email, newPassword } = req.body;
-
+  const { email, password } = req.body;
+  const newPassword = password;
   // Kiểm tra xem các trường có được điền đầy đủ không
   if (!email || !newPassword) {
     return res.status(400).json({ message: "Tất cả các trường đều yêu cầu" });
@@ -653,7 +656,7 @@ const updatePasswordUser = async (req, res) => {
 
     // Cập nhật mật khẩu vào cơ sở dữ liệu
     const [result] = await pool.execute(
-      "UPDATE NGUOIDUNG SET MATKHAU = ?, UPDATED_AT = NOW() WHERE EMAIL = ?",
+      "UPDATE NGUOIDUNG SET MATKHAU = ? WHERE EMAIL = ?",
       [hashedPassword, email]
     );
 
@@ -681,6 +684,112 @@ const updatePasswordUser = async (req, res) => {
   }
 };
 
+const sendOtp = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) return res.status(400).json({ message: "Email is required" });
+
+  // Tạo OTP và thời gian hết hạn
+  const otp = crypto.randomInt(100000, 999999);
+  const expiresAt = Date.now() + 1 * 60 * 1000; // 1 phút
+  console.log("process.env.EMAIL_OTP", process.env.EMAIL_OTP);
+  console.log("process.env.PASSWORD_OTP", process.env.PASSWORD_OTP);
+  // Lưu OTP
+  otpStorage.set(email, { otp, expiresAt });
+  console.log("to email: ", email);
+  // Gửi email
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_OTP,
+      pass: process.env.PASSWORD_OTP,
+    },
+  });
+
+  const mailOptions = {
+    from: "Website Mỹ Phẩm Mỹ Duyên",
+    to: email,
+    subject: "Mỹ Phẩm Mỹ Duyên - Your OTP Code",
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #fff;">
+        <div style="text-align: center; padding: 10px 0;">
+          <h1 style="color: #e91e63; margin-bottom: 5px;">Mỹ Phẩm Mỹ Duyên</h1>
+          <p style="font-size: 16px; color: #666;">Vẻ đẹp hoàn hảo, phong cách đỉnh cao</p>
+        </div>
+        <div style="padding: 20px; background-color: #fce4ec; border-radius: 8px;">
+          <h2 style="color: #e91e63; text-align: center;">Mã OTP của bạn</h2>
+          <p style="font-size: 18px; margin: 15px 0; font-weight: bold; color: #000; text-align: center;">${otp}</p>
+          <p style="font-size: 14px; color: #555; text-align: center;">Mã này sẽ hết hạn trong <strong>1 phút</strong>.</p>
+        </div>
+        <div style="margin-top: 20px; text-align: center; color: #888; font-size: 12px;">
+          <p>Nếu bạn không yêu cầu mã này, vui lòng bỏ qua email.</p>
+          <p style="margin-top: 10px;">&copy; 2024 Mỹ Phẩm Mỹ Duyên. Tất cả các quyền được bảo lưu.</p>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return res.status(200).json({
+      EM: "Gửi OTP thành công",
+      EC: 1,
+      DT: [],
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      EM: "Gửi OTP thất bại",
+      EC: -1,
+      DT: [],
+    });
+  }
+};
+const checkOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: "Email and OTP are required" });
+  }
+
+  // Kiểm tra OTP có tồn tại trong bộ nhớ
+  const storedOtp = otpStorage.get(email);
+
+  if (!storedOtp) {
+    return res.status(400).json({
+      EM: "OTP không tồn tại hoặc đã hết hạn",
+      EC: -1,
+      DT: [],
+    });
+  }
+
+  // Kiểm tra thời gian hết hạn của OTP
+  const currentTime = Date.now();
+  if (currentTime > storedOtp.expiresAt) {
+    otpStorage.delete(email); // Xóa OTP đã hết hạn
+    return res.status(400).json({
+      EM: "OTP đã hết hạn",
+      EC: -1,
+      DT: [],
+    });
+  }
+
+  // Kiểm tra OTP có đúng không
+  if (parseInt(otp) === storedOtp.otp) {
+    return res.status(200).json({
+      EM: "OTP hợp lệ",
+      EC: 1,
+      DT: [],
+    });
+  } else {
+    return res.status(400).json({
+      EM: "OTP không đúng",
+      EC: -1,
+      DT: [],
+    });
+  }
+};
+
 module.exports = {
   loginUserGoogle,
   verifyAdmin,
@@ -692,4 +801,7 @@ module.exports = {
   updatePasswordUser,
   registerUser,
   loginUser,
+
+  sendOtp,
+  checkOtp,
 };

@@ -109,7 +109,7 @@ const Header = () => {
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <Phone sx={{ color: "white", marginRight: 1 }} />
           <Typography variant="body2" sx={{ color: "white" }}>
-            1800 54 54 57
+            0768874294
           </Typography>
         </Box>
 

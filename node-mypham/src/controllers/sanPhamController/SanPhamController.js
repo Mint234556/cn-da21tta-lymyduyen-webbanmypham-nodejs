@@ -43,7 +43,7 @@ const getSAN_PHAM_Use_ById = async (req, res) => {
   try {
     const [results] = await connection.execute(
       `
-      SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
+      SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM,TRANGTHAISANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
       FROM SANPHAM
       WHERE MASANPHAM = ? AND TRANGTHAISANPHAM = 'Đang hoạt động'
       `,
@@ -76,7 +76,7 @@ const getSAN_PHAM_Use_ById = async (req, res) => {
 const getSAN_PHAM_Use = async (req, res) => {
   try {
     const [results] = await connection.execute(`
-      SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
+      SELECT MASANPHAM, MALOAISANPHAM, TENSANPHAM,TRANGTHAISANPHAM, MOTA, GIA, SOLUONG, HINHANHSANPHAM, CREATED_AT_SP, UPDATED_AT_SP
       FROM SANPHAM
       WHERE TRANGTHAISANPHAM = 'Đang hoạt động'
     `);
@@ -440,6 +440,80 @@ const deleteSAN_PHAM = async (req, res) => {
   }
 };
 
+const getTop8RatedProducts = async (req, res) => {
+  try {
+    const [rows] = await connection.execute(`
+      SELECT 
+        sp.*,
+        ROUND(AVG(ct.DANHGIA), 1) as average_rating,
+        COUNT(ct.DANHGIA) as total_ratings
+      FROM SANPHAM sp
+      LEFT JOIN CHITIETDONHANG ct ON sp.MASANPHAM = ct.MASANPHAM
+      WHERE ct.DANHGIA IS NOT NULL
+      GROUP BY sp.MASANPHAM
+      ORDER BY average_rating DESC, total_ratings DESC
+      LIMIT 8
+    `);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        EM: "Không tìm thấy sản phẩm",
+        EC: 0,
+        DT: [],
+      });
+    }
+
+    return res.status(200).json({
+      EM: "Lấy danh sách sản phẩm thành công",
+      EC: 1,
+      DT: rows,
+    });
+  } catch (error) {
+    console.error("Error getting top rated products:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy sản phẩm",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+const getTop8BestSellers = async (req, res) => {
+  try {
+    const [rows] = await connection.execute(`
+      SELECT 
+        sp.*,
+        SUM(ct.SOLUONGSP) as total_sold,
+        COUNT(ct.MASANPHAM) as order_count
+      FROM SANPHAM sp
+      LEFT JOIN CHITIETDONHANG ct ON sp.MASANPHAM = ct.MASANPHAM
+      GROUP BY sp.MASANPHAM
+      ORDER BY total_sold DESC, order_count DESC
+      LIMIT 8
+    `);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({
+        EM: "Không tìm thấy sản phẩm",
+        EC: 0,
+        DT: [],
+      });
+    }
+
+    return res.status(200).json({
+      EM: "Lấy danh sách sản phẩm bán chạy thành công",
+      EC: 1,
+      DT: rows,
+    });
+  } catch (error) {
+    console.error("Error getting best selling products:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy sản phẩm bán chạy",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+
 module.exports = {
   getSAN_PHAM,
   createSAN_PHAM,
@@ -451,4 +525,6 @@ module.exports = {
   getTopExpensiveProducts,
   getSAN_PHAM_Use_ById,
   getSAN_PHAM_Search,
+  getTop8RatedProducts,
+  getTop8BestSellers,
 };

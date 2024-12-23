@@ -15,10 +15,14 @@ import {
 import { ArrowBack } from "@mui/icons-material";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
-
+import { enqueueSnackbar } from "notistack";
+import { useDispatch, useSelector } from "react-redux";
+import { setTotalCart } from "../../redux/authSlice";
 const ProductDetail = () => {
   const { id } = useParams();
   const [products, setProducts] = useState({});
+  const dispatch = useDispatch();
+  const { isAuthenticated, userInfo } = useSelector((state) => state.auth);
   const api = process.env.REACT_APP_URL_SERVER;
   const navigate = useNavigate();
   useEffect(() => {
@@ -36,7 +40,38 @@ const ProductDetail = () => {
       console.error("Error fetching products:", error);
     }
   };
+  // THÊM VÀO GIỎ HÀNG
+  const handleAddToCart = async (isToCart) => {
+    if (!isAuthenticated) {
+      enqueueSnackbar("Vui lòng đăng nhập để tiếp tục!");
+      navigate("/login"); // Đảm bảo '/login' là đường dẫn đúng tới trang đăng nhập của bạn
+      return; // Dừng hàm nếu chưa đăng nhập
+    }
 
+    try {
+      const payload = {
+        ID_SAN_PHAM: id,
+        ID_NGUOI_DUNG: userInfo.MANGUOIDUNG, // ID người dùng
+        NGAY_CAP_NHAT_GIOHANG: new Date().toISOString(),
+      };
+
+      const response = await axios.post(`${api}/gio-hang/`, payload);
+
+      if (response.data.EC === 1) {
+        enqueueSnackbar(response.data.EM, { variant: "success" });
+        dispatch(setTotalCart(response.data.totalQuantity));
+      } else {
+        enqueueSnackbar(response.data.EM, { variant: "error" });
+      }
+    } catch (error) {
+      console.error("Lỗi hệ thống:", error);
+      enqueueSnackbar(error.response.data.EM, { variant: "error" });
+    } finally {
+      if (isToCart) {
+        navigate("/cart");
+      }
+    }
+  };
   // Hàm xử lý quay lại
   const handleBack = () => {
     navigate(-1); // Điều hướng về route trước
@@ -101,9 +136,7 @@ const ProductDetail = () => {
             sx={{ marginBottom: 2, color: "#757575" }}
           >
             Trạng thái:{" "}
-            {products.TRANGTHAISANPHAM === 1
-              ? "Đang hoạt động"
-              : "Ngừng hoạt động"}
+            {products.TRANGTHAISANPHAM || "Không có thông tin trạng thái"}
           </Typography>
 
           {/* Category Info */}
@@ -125,6 +158,7 @@ const ProductDetail = () => {
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} sm={6}>
               <Button
+                onClick={() => handleAddToCart(false)}
                 variant="contained"
                 fullWidth
                 sx={{
@@ -140,6 +174,7 @@ const ProductDetail = () => {
             <Grid item xs={12} sm={6}>
               <Button
                 variant="contained"
+                onClick={() => handleAddToCart(true)}
                 fullWidth
                 sx={{
                   backgroundColor: "#1976d2",

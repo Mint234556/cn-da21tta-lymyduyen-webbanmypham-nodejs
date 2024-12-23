@@ -8,14 +8,23 @@ import {
   Grid,
   FormControlLabel,
   Checkbox,
+  Stepper,
+  Step,
+  StepLabel,
 } from "@mui/material";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 import { ArrowBack } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import logo from "../../public/logo/favicon.png";
+import OtpForm from "./component/otpForm";
+import EmailForm from "./component/sendOtp";
 const RegisterForm = () => {
   const api = process.env.REACT_APP_URL_SERVER;
+  const steps = ["Sent OTP", "Verify OTP"];
+  const [isOpenOtp, setIsOpenOtp] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const [email, setEmail] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,7 +35,7 @@ const RegisterForm = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [IsOtpSent, setIsOtpSent] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -78,191 +87,193 @@ const RegisterForm = () => {
   const [countdown, setCountdown] = useState(0); // State to track countdown time
   // Handle OTP send
 
-  const handleSendOtp = async () => {
-    if (countdown > 0) return; // Prevent sending OTP if countdown is active
-
-    try {
-      const response = await axios.post(`${api}/send-otp`, {
-        email: formData.email,
-      });
-      if (response.data.EC === 1) {
-        enqueueSnackbar(response.data.EM);
-        setCountdown(60); // Set countdown to 60 seconds
-        setIsOtpSent(true); // Mark OTP as sent
-      } else {
-        enqueueSnackbar(response.data.EM);
-      }
-    } catch (error) {}
-  };
-  //handle Check OTP
-  const handleCheckOtp = async () => {
-    try {
-      const response = await axios.post(`${api}/check-otp`, {
-        email: formData.email,
-        otp: otp,
-      });
-      if (response.data.EC === 1) {
-        enqueueSnackbar(response.data.EM);
-
-        handleRegister();
-      } else {
-        enqueueSnackbar(response.data.EM);
-      }
-    } catch (error) {}
-  };
-  // Start countdown timer
-  useEffect(() => {
-    let timer;
-    if (countdown > 0) {
-      timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    } else if (countdown === 0) {
-      setIsOtpSent(false);
-    }
-    return () => clearInterval(timer);
-  }, [countdown]);
   return (
-    <Box
-      sx={{
-        maxWidth: 400,
-        margin: "auto",
-        padding: 3,
-        backgroundColor: "#fff5f8",
-        borderRadius: 2,
-        boxShadow: 2,
-        mt: 2,
-      }}
-    >
-      <Grid container justifyContent="space-between" alignItems="center" mb={3}>
-        <Button
-          variant="text"
-          startIcon={<ArrowBack />}
-          sx={{ color: "black" }}
-          component={Link}
-          to="/login"
-        >
-          Quay lại
-        </Button>
-        <img
-          src={`https://image.cocoonvietnam.com/uploads/vegan_society_41cc2b390a.svg`}
-          alt="PNJ"
-          style={{ width: "80px" }}
-        />
-      </Grid>
+    <>
+      {!isOpenOtp ? (
+        <>
+          {" "}
+          <Box
+            sx={{
+              maxWidth: 400,
+              margin: "auto",
+              padding: 3,
+              backgroundColor: "#fff5f8",
+              borderRadius: 2,
+              boxShadow: 2,
+              mt: 2,
+            }}
+          >
+            <Grid
+              container
+              justifyContent="space-between"
+              alignItems="center"
+              mb={3}
+            >
+              <Button
+                variant="text"
+                startIcon={<ArrowBack />}
+                sx={{ color: "black" }}
+                component={Link}
+                to="/login"
+              >
+                Quay lại
+              </Button>
+              <img
+                src={`https://image.cocoonvietnam.com/uploads/vegan_society_41cc2b390a.svg`}
+                alt="PNJ"
+                style={{ width: "80px" }}
+              />
+            </Grid>
 
-      <Typography variant="h6" align="center" gutterBottom>
-        Đăng ký tài khoản
-      </Typography>
-      <Typography variant="body2" align="center" color="textSecondary" mb={3}>
-        Vui lòng nhập thông tin để đăng ký tài khoản mới
-      </Typography>
+            <Typography variant="h6" align="center" gutterBottom>
+              Đăng ký tài khoản
+            </Typography>
+            <Typography
+              variant="body2"
+              align="center"
+              color="textSecondary"
+              mb={3}
+            >
+              Vui lòng nhập thông tin để đăng ký tài khoản mới
+            </Typography>
 
-      {errorMessage && (
-        <Alert severity="error" sx={{ marginBottom: 2 }}>
-          {errorMessage}
-        </Alert>
+            {errorMessage && (
+              <Alert severity="error" sx={{ marginBottom: 2 }}>
+                {errorMessage}
+              </Alert>
+            )}
+            {successMessage && (
+              <Alert severity="success" sx={{ marginBottom: 2 }}>
+                {successMessage}
+              </Alert>
+            )}
+
+            {/* Trường Họ và tên */}
+            <TextField
+              label="Họ và tên"
+              variant="outlined"
+              fullWidth
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+            />
+
+            {/* Trường Email */}
+            <TextField
+              label="Email"
+              variant="outlined"
+              fullWidth
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              type="email"
+              sx={{ marginBottom: 2 }}
+            />
+
+            {/* Trường Mật khẩu */}
+            <TextField
+              label="Mật khẩu"
+              variant="outlined"
+              fullWidth
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              type="password"
+              sx={{ marginBottom: 2 }}
+            />
+
+            {/* Trường Số điện thoại */}
+            <TextField
+              label="Số điện thoại"
+              variant="outlined"
+              fullWidth
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              type="tel"
+              sx={{ marginBottom: 2 }}
+            />
+
+            {/* Trường Địa chỉ */}
+            <TextField
+              label="Địa chỉ (tùy chọn)"
+              variant="outlined"
+              fullWidth
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              sx={{ marginBottom: 2 }}
+            />
+
+            {/* Ghi nhớ tài khoản */}
+            <FormControlLabel
+              control={
+                <Checkbox checked={isChecked} onChange={handleCheckboxChange} />
+              }
+              label="Đồng ý với điều khoản và chính sách bảo mật"
+            />
+
+            {/* Nút Đăng ký */}
+            <Box mt={2}>
+              <Button
+                variant="contained"
+                fullWidth
+                color="primary"
+                onClick={() => setIsOpenOtp(true)}
+                disabled={
+                  !formData.email || !formData.password || !formData.fullName
+                }
+              >
+                Đăng ký
+              </Button>
+            </Box>
+
+            <Box mt={3} textAlign="center">
+              <Typography variant="body2" color="textSecondary">
+                Đã có tài khoản?
+              </Typography>
+              <Button
+                variant="text"
+                color="primary"
+                component={Link}
+                to="/login"
+                sx={{ fontWeight: "bold", textTransform: "none" }}
+              >
+                Đăng nhập
+              </Button>
+            </Box>
+          </Box>{" "}
+        </>
+      ) : (
+        <>
+          <Box sx={{ width: "100%", maxWidth: 600, margin: "0 auto", p: 3 }}>
+            <Stepper activeStep={activeStep}>
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+            {activeStep === 0 && (
+              <EmailForm
+                setActiveStep={setActiveStep}
+                setEmail={setEmail}
+                emailRegister={formData.email}
+                setIsOpenOtp={setIsOpenOtp}
+              />
+            )}
+            {activeStep === 1 && (
+              <OtpForm
+                handleRegister={handleRegister}
+                emailRegister={formData.email}
+                setActiveStep={setActiveStep}
+              />
+            )}
+          </Box>{" "}
+        </>
       )}
-      {successMessage && (
-        <Alert severity="success" sx={{ marginBottom: 2 }}>
-          {successMessage}
-        </Alert>
-      )}
-
-      {/* Trường Họ và tên */}
-      <TextField
-        label="Họ và tên"
-        variant="outlined"
-        fullWidth
-        name="fullName"
-        value={formData.fullName}
-        onChange={handleChange}
-        sx={{ marginBottom: 2 }}
-      />
-
-      {/* Trường Email */}
-      <TextField
-        label="Email"
-        variant="outlined"
-        fullWidth
-        name="email"
-        value={formData.email}
-        onChange={handleChange}
-        type="email"
-        sx={{ marginBottom: 2 }}
-      />
-
-      {/* Trường Mật khẩu */}
-      <TextField
-        label="Mật khẩu"
-        variant="outlined"
-        fullWidth
-        name="password"
-        value={formData.password}
-        onChange={handleChange}
-        type="password"
-        sx={{ marginBottom: 2 }}
-      />
-
-      {/* Trường Số điện thoại */}
-      <TextField
-        label="Số điện thoại"
-        variant="outlined"
-        fullWidth
-        name="phone"
-        value={formData.phone}
-        onChange={handleChange}
-        type="tel"
-        sx={{ marginBottom: 2 }}
-      />
-
-      {/* Trường Địa chỉ */}
-      <TextField
-        label="Địa chỉ (tùy chọn)"
-        variant="outlined"
-        fullWidth
-        name="address"
-        value={formData.address}
-        onChange={handleChange}
-        sx={{ marginBottom: 2 }}
-      />
-
-      {/* Ghi nhớ tài khoản */}
-      <FormControlLabel
-        control={
-          <Checkbox checked={isChecked} onChange={handleCheckboxChange} />
-        }
-        label="Đồng ý với điều khoản và chính sách bảo mật"
-      />
-
-      {/* Nút Đăng ký */}
-      <Box mt={2}>
-        <Button
-          variant="contained"
-          fullWidth
-          color="primary"
-          onClick={handleRegister}
-          disabled={!formData.email || !formData.password || !formData.fullName}
-        >
-          Đăng ký
-        </Button>
-      </Box>
-
-      <Box mt={3} textAlign="center">
-        <Typography variant="body2" color="textSecondary">
-          Đã có tài khoản?
-        </Typography>
-        <Button
-          variant="text"
-          color="primary"
-          component={Link}
-          to="/login"
-          sx={{ fontWeight: "bold", textTransform: "none" }}
-        >
-          Đăng nhập
-        </Button>
-      </Box>
-    </Box>
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Grid } from "@mui/material";
+import { Grid, Box } from "@mui/material";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css"; // Import styles
 import carousel1 from "../../public/carousel-1.jpg";
@@ -31,6 +31,8 @@ const Home = () => {
       imageUrl: carousel3,
     },
   ];
+  const apiBestSellers = `${process.env.REACT_APP_URL_SERVER}/san-pham/best-sellers`;
+  const apiBestRating = `${process.env.REACT_APP_URL_SERVER}/san-pham/top-rated`;
 
   return (
     <>
@@ -55,7 +57,13 @@ const Home = () => {
             </div>
           ))}
         </Carousel>
-        <Grid container spacing={2} justifyContent="center" mt={2}>
+        <Grid
+          sx={{ mt: 4, mb: 4 }}
+          container
+          spacing={2}
+          justifyContent="center"
+          mt={2}
+        >
           <Grid item xs={12} sm={4}>
             <img
               src={img1}
@@ -93,9 +101,17 @@ const Home = () => {
             />
           </Grid>
         </Grid>
-        <TrendingProducts />
+        <Box sx={{ mt: 4, mb: 4 }}>
+          {" "}
+          <TrendingProducts />
+        </Box>
+
         <FeaturedBrands />
-        <ProductGrid />
+        <ProductGrid apiURL={apiBestSellers} title={`Sản phẩm bán chạy nhất`} />
+        <ProductGrid
+          apiURL={apiBestRating}
+          title={`Sản phẩm được đánh giá cáo nhất`}
+        />
       </div>
     </>
   );

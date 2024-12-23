@@ -222,22 +222,28 @@ const UserManagement = () => {
               type="password"
               fullWidth
             /> */}
-            <TextField
-              margin="dense"
-              label="Vai Trò"
-              name="VAITRO"
-              value={formData.VAITRO}
-              onChange={handleChange}
-              fullWidth
-            />
-            <TextField
+
+            <FormControl fullWidth margin="dense">
+              <InputLabel>Vai Trò</InputLabel>
+              <Select
+                name="VAITRO"
+                value={formData.VAITRO}
+                onChange={handleChange}
+                label="Vai Trò"
+              >
+                <MenuItem value="admin">Người quản trị</MenuItem>
+                <MenuItem value="user">Người dùng</MenuItem>
+              </Select>
+            </FormControl>
+            {/* <TextField
               margin="dense"
               label="Avatar URL"
               name="AVATAR"
               value={formData.AVATAR}
               onChange={handleChange}
               fullWidth
-            />
+              dis
+            /> */}
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
@@ -270,7 +276,7 @@ const UserManagement = () => {
                   <TableCell>{user.MANGUOIDUNG}</TableCell>{" "}
                   <TableCell>
                     <Avatar
-                      src={user.AVATAR}
+                      src={`${api}/images/${user.AVATAR}`}
                       alt={user.TENNGUOIDUNG}
                       sx={{ width: 40, height: 40 }}
                     />
