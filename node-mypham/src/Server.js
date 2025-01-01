@@ -32,6 +32,7 @@ const userRoute = require("./routers/nguoiDungRouter/userRouters.js");
 //api products
 const sanPhamRoute = require("./routers/sanPhamRouters/SanPhamRouter.js");
 const danhMucSanPham = require("./routers/sanPhamRouters/categoriesRoute.js");
+const thongKeRoute = require("./routers/sanPhamRouters/thongKeRoute.js");
 //api thanh toán
 
 const donHangRoute = require("./routers/thanhToanRouter/donHangRouter.js");
@@ -51,6 +52,9 @@ app.use("/chi-tiet-hoa-don/", chiTietHoaDonRoute);
 //
 app.use("/don-hang/", donHangRoute);
 app.use("/khuyen-mai/", khuyenMaiRoute);
+
+// Sử dụng router cho thống kê
+app.use("/thong-ke", thongKeRoute);
 
 const configViewEngine = require("./config/viewEngine");
 configViewEngine(app);

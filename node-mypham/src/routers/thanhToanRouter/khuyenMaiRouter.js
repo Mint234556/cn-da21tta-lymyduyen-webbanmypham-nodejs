@@ -6,7 +6,7 @@ const router = express.Router();
 // Import controller functions
 const {
   getAllKhuyenMai,
-  getKhuyenMaiById,
+  getKhuyenMaiByCODE,
   createKhuyenMai,
   updateKhuyenMai,
   deleteKhuyenMai,
@@ -16,7 +16,7 @@ const {
 router.get("/", getAllKhuyenMai);
 
 // Lấy khuyến mãi theo ID
-router.get("/:MAKHUYENMAI", getKhuyenMaiById);
+router.get("/:CODE", getKhuyenMaiByCODE);
 
 // Tạo mới khuyến mãi
 router.post("/", createKhuyenMai);

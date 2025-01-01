@@ -223,7 +223,7 @@ const UserProfile = () => {
             value={formData.EMAIL || ""}
             onChange={handleChange}
             fullWidth
-            disabled={!isEditing}
+            disabled={true}
           />
           <TextField
             margin="normal"

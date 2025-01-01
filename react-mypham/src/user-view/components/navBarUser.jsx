@@ -122,7 +122,7 @@ const NavBarUser = () => {
                 <ListItem
                   button
                   component={Link}
-                  to="/admin/don-hang/dang-xu-ly"
+                  to="/profile/don-hang/dang-xu-ly"
                   sx={{
                     pl: 4,
                     color: "#1f1f1f",
@@ -144,7 +144,7 @@ const NavBarUser = () => {
                 <ListItem
                   button
                   component={Link}
-                  to="/admin/don-hang/tat-ca"
+                  to="/profile/don-hang/tat-ca"
                   sx={{
                     pl: 4,
                     color: "#1f1f1f",
@@ -165,7 +165,7 @@ const NavBarUser = () => {
                 <ListItem
                   button
                   component={Link}
-                  to="/admin/don-hang/da-giao"
+                  to="/profile/don-hang/da-giao"
                   sx={{
                     pl: 4,
                     color: "#1f1f1f",
@@ -186,7 +186,7 @@ const NavBarUser = () => {
                 <ListItem
                   button
                   component={Link}
-                  to="/admin/don-hang/da-huy"
+                  to="/profile/don-hang/da-huy"
                   sx={{
                     pl: 4,
                     color: "#1f1f1f",
@@ -204,27 +204,6 @@ const NavBarUser = () => {
                 >
                   <ListItemText primary="Đơn hàng đã hủy" />
                 </ListItem>{" "}
-                <ListItem
-                  button
-                  component={Link}
-                  to="/admin/thanh-toan/them-thanh-toan"
-                  sx={{
-                    pl: 4,
-                    color: "#1f1f1f",
-                    mt: 1,
-                    mb: 1,
-                    borderRadius: "13px",
-                    backgroundColor:
-                      location.pathname === "/admin/don-hang/tat-ca"
-                        ? "#8aad51"
-                        : "transparent", // Kiểm tra nếu đang ở trang này
-                    "&:hover": {
-                      backgroundColor: "#8aad51",
-                    },
-                  }}
-                >
-                  <ListItemText primary="Phương Thức Thanh Toán" />
-                </ListItem>
               </List>
             </Collapse>
           </List>

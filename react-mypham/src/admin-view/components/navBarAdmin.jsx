@@ -22,7 +22,7 @@ import ExpandLess from "@mui/icons-material/ExpandLess"; // Import đúng từ �
 import ExpandMore from "@mui/icons-material/ExpandMore"; // Import đúng từ đây
 import BarChartIcon from "@mui/icons-material/BarChart";
 import { Link, useLocation } from "react-router-dom";
-
+import PersonIcon from "@mui/icons-material/Person";
 const NavBarAdmin = () => {
   const [openSection, setOpenSection] = useState(null);
   const location = useLocation();
@@ -116,7 +116,7 @@ const NavBarAdmin = () => {
             >
               <ListItemIcon>
                 {" "}
-                <BarChartIcon sx={{ color: "#1f1f1f" }} />
+                <PersonIcon sx={{ color: "#1f1f1f" }} />
               </ListItemIcon>
 
               <ListItemText primary="Quản lý người dùng" />
@@ -212,6 +212,27 @@ const NavBarAdmin = () => {
                 <ListItem
                   button
                   component={Link}
+                  to="/admin/don-hang/tat-ca"
+                  sx={{
+                    pl: 4,
+                    color: "#1f1f1f",
+                    mt: 1,
+                    mb: 1,
+                    borderRadius: "13px",
+                    backgroundColor:
+                      location.pathname === "/admin/don-hang/tat-ca"
+                        ? "#8aad51"
+                        : "transparent", // Kiểm tra nếu đang ở trang này
+                    "&:hover": {
+                      backgroundColor: "#8aad51",
+                    },
+                  }}
+                >
+                  <ListItemText primary="Tất cả đơn hàng" />
+                </ListItem>
+                <ListItem
+                  button
+                  component={Link}
                   to="/admin/don-hang/dang-xu-ly"
                   sx={{
                     pl: 4,
@@ -234,48 +255,6 @@ const NavBarAdmin = () => {
                 <ListItem
                   button
                   component={Link}
-                  to="/admin/don-hang/tat-ca"
-                  sx={{
-                    pl: 4,
-                    color: "#1f1f1f",
-                    mt: 1,
-                    mb: 1,
-                    borderRadius: "13px",
-                    backgroundColor:
-                      location.pathname === "/admin/don-hang/tat-ca"
-                        ? "#8aad51"
-                        : "transparent", // Kiểm tra nếu đang ở trang này
-                    "&:hover": {
-                      backgroundColor: "#8aad51",
-                    },
-                  }}
-                >
-                  <ListItemText primary="Tất cả đơn hàng" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={Link}
-                  to="/admin/don-hang/da-giao"
-                  sx={{
-                    pl: 4,
-                    color: "#1f1f1f",
-                    mt: 1,
-                    mb: 1,
-                    borderRadius: "13px",
-                    backgroundColor:
-                      location.pathname === "/admin/don-hang/tat-ca"
-                        ? "#8aad51"
-                        : "transparent", // Kiểm tra nếu đang ở trang này
-                    "&:hover": {
-                      backgroundColor: "#8aad51",
-                    },
-                  }}
-                >
-                  <ListItemText primary="Đơn hàng đã giao" />
-                </ListItem>{" "}
-                <ListItem
-                  button
-                  component={Link}
                   to="/admin/don-hang/da-huy"
                   sx={{
                     pl: 4,
@@ -284,7 +263,7 @@ const NavBarAdmin = () => {
                     mb: 1,
                     borderRadius: "13px",
                     backgroundColor:
-                      location.pathname === "/admin/don-hang/tat-ca"
+                      location.pathname === "/admin/don-hang/da-huy"
                         ? "#8aad51"
                         : "transparent", // Kiểm tra nếu đang ở trang này
                     "&:hover": {
@@ -297,7 +276,7 @@ const NavBarAdmin = () => {
                 <ListItem
                   button
                   component={Link}
-                  to="/admin/thanh-toan/them-thanh-toan"
+                  to="/admin/don-hang/hoan-tat"
                   sx={{
                     pl: 4,
                     color: "#1f1f1f",
@@ -305,7 +284,7 @@ const NavBarAdmin = () => {
                     mb: 1,
                     borderRadius: "13px",
                     backgroundColor:
-                      location.pathname === "/admin/don-hang/tat-ca"
+                      location.pathname === "/admin/don-hang/hoan-tat"
                         ? "#8aad51"
                         : "transparent", // Kiểm tra nếu đang ở trang này
                     "&:hover": {
@@ -313,8 +292,29 @@ const NavBarAdmin = () => {
                     },
                   }}
                 >
-                  <ListItemText primary="Phương Thức Thanh Toán" />
-                </ListItem>
+                  <ListItemText primary="Đơn hàng đã thanh toán" />
+                </ListItem>{" "}
+                <ListItem
+                  button
+                  component={Link}
+                  to="/admin/khuyen-mai"
+                  sx={{
+                    pl: 4,
+                    color: "#1f1f1f",
+                    mt: 1,
+                    mb: 1,
+                    borderRadius: "13px",
+                    backgroundColor:
+                      location.pathname === "/admin/khuyen-mai"
+                        ? "#8aad51"
+                        : "transparent", // Kiểm tra nếu đang ở trang này
+                    "&:hover": {
+                      backgroundColor: "#8aad51",
+                    },
+                  }}
+                >
+                  <ListItemText primary="Quản lý khuyến mãi" />
+                </ListItem>{" "}
               </List>
             </Collapse>
           </List>

@@ -1,11 +1,15 @@
 // controllers/sanPhamController/khuyenMaiController.js
+const moment = require("moment"); // Cài đặt nếu chưa: npm install moment
 
 const connection = require("../../config/database"); // Kết nối cơ sở dữ liệu
 
 // Lấy tất cả khuyến mãi
 const getAllKhuyenMai = async (req, res) => {
   try {
-    const [results] = await connection.execute("SELECT * FROM KHUYENMAI");
+    // Sử dụng ORDER BY MAKHUYENMAI DESC để sắp xếp theo thứ tự giảm dần
+    const [results] = await connection.execute(
+      "SELECT * FROM KHUYENMAI ORDER BY MAKHUYENMAI DESC"
+    );
     return res.status(200).json({
       EM: "Lấy danh sách khuyến mãi thành công",
       EC: 1,
@@ -21,19 +25,44 @@ const getAllKhuyenMai = async (req, res) => {
   }
 };
 
-// Lấy khuyến mãi theo ID
-const getKhuyenMaiById = async (req, res) => {
-  const { MAKHUYENMAI } = req.params;
+// Lấy khuyến mãi theo CODE
+const getKhuyenMaiByCODE = async (req, res) => {
+  const { CODE } = req.params;
+  console.log("CODE", CODE);
 
   try {
     const [result] = await connection.execute(
-      "SELECT * FROM KHUYENMAI WHERE MAKHUYENMAI = ?",
-      [MAKHUYENMAI]
+      "SELECT * FROM KHUYENMAI WHERE CODE = ?",
+      [CODE]
     );
 
     if (result.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         EM: "Khuyến mãi không tồn tại",
+        EC: 0,
+        DT: [],
+      });
+    }
+
+    // Lấy khuyến mãi từ kết quả
+    const khuyenMai = result[0];
+
+    // Kiểm tra HANSUDUNG (hết hạn)
+    const currentDate = new Date();
+    const expiryDate = new Date(khuyenMai.HANSUDUNG);
+
+    if (expiryDate < currentDate) {
+      return res.status(200).json({
+        EM: "Khuyến mãi đã hết hạn",
+        EC: 0,
+        DT: [],
+      });
+    }
+
+    // Kiểm tra MOTA (Đã được sử dụng)
+    if (khuyenMai.MOTA === "Đã được sử dụng") {
+      return res.status(200).json({
+        EM: "Khuyến mãi đã được sử dụng",
         EC: 0,
         DT: [],
       });
@@ -42,10 +71,10 @@ const getKhuyenMaiById = async (req, res) => {
     return res.status(200).json({
       EM: "Lấy khuyến mãi thành công",
       EC: 1,
-      DT: result[0],
+      DT: khuyenMai,
     });
   } catch (error) {
-    console.error("Error getting khuyen mai by ID:", error);
+    console.error("Error getting khuyen mai by CODE:", error);
     return res.status(500).json({
       EM: "Có lỗi xảy ra khi lấy khuyến mãi",
       EC: 0,
@@ -56,12 +85,12 @@ const getKhuyenMaiById = async (req, res) => {
 
 // Tạo mới khuyến mãi
 const createKhuyenMai = async (req, res) => {
-  const { CODE, MOTA, HANSUDUNG } = req.body;
+  const { CODE, MOTA, HANSUDUNG, SOTIENGIAM } = req.body;
 
   try {
     const [result] = await connection.execute(
-      "INSERT INTO KHUYENMAI (CODE, MOTA, HANSUDUNG) VALUES (?, ?, ?)",
-      [CODE, MOTA, HANSUDUNG]
+      "INSERT INTO KHUYENMAI (CODE, MOTA, HANSUDUNG ,SOTIENGIAM) VALUES (?, ?, ?,?)",
+      [CODE, MOTA, HANSUDUNG, SOTIENGIAM]
     );
 
     return res.status(201).json({
@@ -72,6 +101,7 @@ const createKhuyenMai = async (req, res) => {
         CODE,
         MOTA,
         HANSUDUNG,
+        SOTIENGIAM,
       },
     });
   } catch (error) {
@@ -84,15 +114,40 @@ const createKhuyenMai = async (req, res) => {
   }
 };
 
-// Cập nhật khuyến mãi
+// Cập nhật khuyến mãi (dynamic)
 const updateKhuyenMai = async (req, res) => {
   const { MAKHUYENMAI } = req.params;
-  const { CODE, MOTA, HANSUDUNG } = req.body;
+  let fieldsToUpdate = req.body; // Các trường cần cập nhật từ body
 
   try {
+    // Kiểm tra nếu không có trường nào để cập nhật
+    if (Object.keys(fieldsToUpdate).length === 0) {
+      return res.status(400).json({
+        EM: "Không có dữ liệu để cập nhật",
+        EC: 0,
+        DT: [],
+      });
+    }
+
+    // Chuyển đổi định dạng datetime cho HANSUDUNG nếu tồn tại
+    if (fieldsToUpdate.HANSUDUNG) {
+      fieldsToUpdate.HANSUDUNG = moment(fieldsToUpdate.HANSUDUNG).format(
+        "YYYY-MM-DD HH:mm:ss"
+      );
+    }
+
+    // Tạo truy vấn động
+    const updates = Object.keys(fieldsToUpdate)
+      .map((field) => `${field} = ?`)
+      .join(", ");
+    const values = Object.values(fieldsToUpdate);
+
+    // Thêm MAKHUYENMAI vào cuối mảng values
+    values.push(MAKHUYENMAI);
+
     const [result] = await connection.execute(
-      "UPDATE KHUYENMAI SET CODE = ?, MOTA = ?, HANSUDUNG = ? WHERE MAKHUYENMAI = ?",
-      [CODE, MOTA, HANSUDUNG, MAKHUYENMAI]
+      `UPDATE KHUYENMAI SET ${updates} WHERE MAKHUYENMAI = ?`,
+      values
     );
 
     if (result.affectedRows === 0) {
@@ -106,12 +161,7 @@ const updateKhuyenMai = async (req, res) => {
     return res.status(200).json({
       EM: "Cập nhật khuyến mãi thành công",
       EC: 1,
-      DT: {
-        MAKHUYENMAI,
-        CODE,
-        MOTA,
-        HANSUDUNG,
-      },
+      DT: fieldsToUpdate,
     });
   } catch (error) {
     console.error("Error updating khuyen mai:", error);
@@ -158,7 +208,7 @@ const deleteKhuyenMai = async (req, res) => {
 
 module.exports = {
   getAllKhuyenMai,
-  getKhuyenMaiById,
+  getKhuyenMaiByCODE,
   createKhuyenMai,
   updateKhuyenMai,
   deleteKhuyenMai,

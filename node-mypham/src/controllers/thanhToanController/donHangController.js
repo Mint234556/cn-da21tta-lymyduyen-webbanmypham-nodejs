@@ -10,13 +10,12 @@ const crypto = require("crypto");
 const otpStorage = new Map();
 
 // Lấy danh sách đơn hàng
+// Lấy danh sách đơn hàng
 const getDON_HANG = async (req, res) => {
   try {
-    // Lấy dữ liệu đơn hàng kèm thông tin thanh toán và người dùng
     const [results] = await connection.execute(`
       SELECT 
         d.MADONHANG, 
-        d.MAKHUYENMAI, 
         d.MANGUOIDUNG, 
         d.TRANGTHAI, 
         d.NGAYTHANHTOAN, 
@@ -29,21 +28,93 @@ const getDON_HANG = async (req, res) => {
         u.SODIENTHOAI, 
         u.TRANGTHAINGUOIDUNG, 
         u.MATKHAU, 
-        u.VAITRO
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
       FROM 
-        DON_HANG d
+        DONHANG d
       LEFT JOIN 
-        NGUOIDUNG u 
-      ON 
-        d.MANGUOIDUNG = u.MANGUOIDUNG
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
       ORDER BY 
-        d.NGAYTHANHTOAN DESC
+        d.NGAYTHANHTOAN DESC;
     `);
 
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      // Tìm đơn hàng có cùng MADONHANG
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        // Nếu chưa có đơn hàng này, tạo mới
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [], // Tạo mảng để lưu sản phẩm trong đơn hàng
+        };
+        orders.push(order); // Thêm đơn hàng vào danh sách
+      }
+
+      // Thêm chi tiết sản phẩm vào mảng sản phẩm của đơn hàng
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    // Trả về kết quả sau khi nhóm thông tin
     return res.status(200).json({
       EM: "Lấy danh sách đơn hàng thành công",
       EC: 1,
-      DT: results,
+      DT: orders,
     });
   } catch (error) {
     console.error("Error getting don hang:", error);
@@ -109,6 +180,7 @@ const getDON_HANG_ByIDUser = async (req, res) => {
 };
 
 // Tạo đơn hàng mới
+
 const createDON_HANG = async (req, res) => {
   const {
     idNguoiDung,
@@ -119,8 +191,10 @@ const createDON_HANG = async (req, res) => {
     ID_ODER,
     items,
     email,
+    hinhThucThanhToan,
     SO_DIEN_THOAI_DON_HANG,
     DIA_CHI_DON_HANG,
+    maKhuyenMai, // Nhận mã khuyến mãi từ request body
   } = req.body;
 
   console.log("req.body", req.body);
@@ -131,53 +205,67 @@ const createDON_HANG = async (req, res) => {
 
     // Tạo đơn hàng
     const ngayTaoDonHang = new Date();
+
     const [results] = await connection.execute(
-      "INSERT INTO DON_HANG (ID_NGUOI_DUNG, ID_THANH_TOAN, TONG_TIEN, TRANG_THAI_DON_HANG, NGAY_TAO_DONHANG, NGAY_CAP_NHAT_DONHANG, ID_ODER, SO_DIEN_THOAI_DON_HANG, DIA_CHI_DON_HANG) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO DONHANG (MANGUOIDUNG, TRANGTHAI, NGAYTHANHTOAN, DIACHIDONHANG, HINHTHUCTHANHTOAN, TONGTIEN) VALUES (?, ?, ?, ?, ?, ?)",
       [
         idNguoiDung,
-        idThanhToan,
-        tongTien,
         trangThaiDonHang,
         ngayTaoDonHang,
-        ngayTaoDonHang,
-        ID_ODER,
-        SO_DIEN_THOAI_DON_HANG,
         DIA_CHI_DON_HANG,
+        hinhThucThanhToan,
+        tongTien,
       ]
     );
 
     const donHangId = results.insertId;
 
-    // Thêm chi tiết đơn hàng vào bảng CHITIETDONHANG và THEM
+    // Thêm chi tiết đơn hàng vào bảng CHITIETDONHANG
     const chiTietDonHangPromises = itemsArray.map(async (item) => {
-      const { ID_SAN_PHAM, TONG_SO_LUONG = 1, GIA, DANHGIA, BINHLUAN } = item;
-      const giaSanPham = GIA * TONG_SO_LUONG;
+      const { MASANPHAM, SOLUONGSP = 1, GIA } = item;
+      const giaSanPham = GIA * SOLUONGSP;
 
       // Thêm vào bảng CHITIETDONHANG
       await connection.execute(
-        "INSERT INTO CHITIETDONHANG (MASANPHAM, MADONHANG, GIASP, SOLUONGSP, DANHGIA, BINHLUAN) VALUES (?, ?, ?, ?, ?, ?)",
-        [ID_SAN_PHAM, donHangId, giaSanPham, TONG_SO_LUONG, DANHGIA, BINHLUAN]
-      );
-
-      // Thêm vào bảng THEM (Giỏ hàng)
-      await connection.execute(
-        "INSERT INTO THEM (MADONHANG, MASANPHAM, SOLUONGDAT) VALUES (?, ?, ?)",
-        [donHangId, ID_SAN_PHAM, TONG_SO_LUONG]
+        "INSERT INTO CHITIETDONHANG (MASANPHAM, MADONHANG, GIASP, SOLUONGSP) VALUES (?, ?, ?, ?)",
+        [MASANPHAM, donHangId, giaSanPham, SOLUONGSP]
       );
     });
 
-    // Chờ tất cả các chi tiết đơn hàng và giỏ hàng được thêm vào
+    // Nếu có mã khuyến mãi, thêm vào bảng AP_DUNG và cập nhật trạng thái KHUYENMAI
+    if (maKhuyenMai) {
+      const ngayApDung = new Date();
+
+      // Thêm vào bảng AP_DUNG
+      await connection.execute(
+        "INSERT INTO AP_DUNG (MADONHANG, MAKHUYENMAI, NGAYAPDUNG) VALUES (?, ?, ?)",
+        [donHangId, maKhuyenMai, ngayApDung]
+      );
+
+      // Cập nhật trạng thái MOTA trong bảng KHUYENMAI
+      await connection.execute(
+        "UPDATE KHUYENMAI SET MOTA = 'Đã được sử dụng' WHERE MAKHUYENMAI = ?",
+        [maKhuyenMai]
+      );
+    }
+
+    // Chờ tất cả các chi tiết đơn hàng được thêm vào
     await Promise.all(chiTietDonHangPromises);
+
+    // Xóa sản phẩm trong giỏ hàng của người dùng
+    await connection.execute("DELETE FROM GIOHANG WHERE MANGUOIDUNG = ?", [
+      idNguoiDung,
+    ]);
 
     // Phản hồi thành công
     return res.json({
-      EM: "Thêm đơn hàng, gửi email và xóa giỏ hàng thành công",
+      EM: "Xác nhận đơn hàng thành công",
       EC: 1,
     });
   } catch (error) {
     console.error("Error creating don hang:", error);
     return res.status(500).json({
-      EM: "Lỗi khi thêm đơn hàng hoặc gửi email",
+      EM: "Lỗi khi thêm đơn hàng hoặc ghi nhận mã khuyến mãi",
       EC: -1,
     });
   }
@@ -249,7 +337,7 @@ const updateTrangThaiDonHang = async (req, res) => {
         email: user.EMAIL,
         address: order.DIA_CHI_DON_HANG,
 
-        phone: order.SO_DIEN_THOAI_DON_HANG,
+        phone: user?.SODIENTHOAI || "Không xác định",
       },
     };
 
@@ -511,10 +599,10 @@ const updateOrderStatusCanceled = async (req, res) => {
   try {
     // Cập nhật trạng thái đơn hàng
     const [result] = await connection.execute(
-      `UPDATE DON_HANG 
-       SET TRANG_THAI_DON_HANG = 'Đã hủy', 
-           NGAY_CAP_NHAT_DONHANG = NOW() 
-       WHERE ID_DON_HANG = ?`,
+      `UPDATE DONHANG 
+       SET TRANGTHAI = 'Đã hủy', 
+           NGAYTHANHTOAN = NOW() 
+       WHERE MADONHANG = ?`,
       [orderId] // Tham số orderId để xác định đơn hàng cần cập nhật
     );
     console.log("result", result);
@@ -558,28 +646,28 @@ const updateOrderStatusSuccess = async (req, res) => {
 
     // Cập nhật trạng thái đơn hàng
     const [result] = await conn.execute(
-      `UPDATE DON_HANG 
-       SET TRANG_THAI_DON_HANG = 'Giao dịch thành công', 
-           NGAY_CAP_NHAT_DONHANG = NOW() 
-       WHERE ID_DON_HANG = ?`,
+      `UPDATE DONHANG 
+       SET TRANGTHAI = 'Giao dịch thành công', 
+           NGAYTHANHTOAN = NOW() 
+       WHERE MADONHANG = ?`,
       [orderId]
     );
 
     if (result.affectedRows > 0) {
       // Lấy danh sách chi tiết đơn hàng (sản phẩm)
       const [orderDetails] = await conn.execute(
-        `SELECT ID_SAN_PHAM, SO_LUONG_SP FROM CHI_TIET_HOA_DON WHERE ID_DON_HANG = ?`,
+        `SELECT MASANPHAM, SOLUONGSP FROM CHITIETDONHANG WHERE MADONHANG = ?`,
         [orderId]
       );
 
       // Trừ số lượng sản phẩm trong bảng SAN_PHAM
       for (let i = 0; i < orderDetails.length; i++) {
-        const { ID_SAN_PHAM, SO_LUONG_SP } = orderDetails[i];
+        const { MASANPHAM, SOLUONGSP } = orderDetails[i];
         await conn.execute(
-          `UPDATE SAN_PHAM 
-           SET SO_LUONG_SANPHAM = SO_LUONG_SANPHAM - ? 
-           WHERE ID_SAN_PHAM = ?`,
-          [SO_LUONG_SP, ID_SAN_PHAM]
+          `UPDATE SANPHAM 
+           SET SOLUONG = SOLUONG - ? 
+           WHERE MASANPHAM = ?`,
+          [SOLUONGSP, MASANPHAM]
         );
       }
 
@@ -616,6 +704,840 @@ const updateOrderStatusSuccess = async (req, res) => {
     }
   }
 };
+
+const getDON_HANG_DangXuLy = async (req, res) => {
+  try {
+    const [results] = await connection.execute(`
+      SELECT 
+        d.MADONHANG, 
+        d.MANGUOIDUNG, 
+        d.TRANGTHAI, 
+        d.NGAYTHANHTOAN, 
+        d.DIACHIDONHANG, 
+        d.HINHTHUCTHANHTOAN, 
+        d.TONGTIEN, 
+        u.TENNGUOIDUNG, 
+        u.EMAIL, 
+        u.DIACHI, 
+        u.SODIENTHOAI, 
+        u.TRANGTHAINGUOIDUNG, 
+        u.MATKHAU, 
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
+      FROM 
+        DONHANG d
+      LEFT JOIN 
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
+        WHERE TRANGTHAI = "Đang chờ thanh toán"
+      ORDER BY 
+        d.NGAYTHANHTOAN DESC;
+    `);
+
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      // Tìm đơn hàng có cùng MADONHANG
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        // Nếu chưa có đơn hàng này, tạo mới
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [], // Tạo mảng để lưu sản phẩm trong đơn hàng
+        };
+        orders.push(order); // Thêm đơn hàng vào danh sách
+      }
+
+      // Thêm chi tiết sản phẩm vào mảng sản phẩm của đơn hàng
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    // Trả về kết quả sau khi nhóm thông tin
+    return res.status(200).json({
+      EM: "Lấy danh sách đơn hàng thành công",
+      EC: 1,
+      DT: orders,
+    });
+  } catch (error) {
+    console.error("Error getting don hang:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy thông tin",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+
+const getDON_HANG_DaHuy = async (req, res) => {
+  try {
+    const [results] = await connection.execute(`
+      SELECT 
+        d.MADONHANG, 
+        d.MANGUOIDUNG, 
+        d.TRANGTHAI, 
+        d.NGAYTHANHTOAN, 
+        d.DIACHIDONHANG, 
+        d.HINHTHUCTHANHTOAN, 
+        d.TONGTIEN, 
+        u.TENNGUOIDUNG, 
+        u.EMAIL, 
+        u.DIACHI, 
+        u.SODIENTHOAI, 
+        u.TRANGTHAINGUOIDUNG, 
+        u.MATKHAU, 
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
+      FROM 
+        DONHANG d
+      LEFT JOIN 
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
+
+         WHERE TRANGTHAI = "Đã hủy"
+      ORDER BY 
+        d.NGAYTHANHTOAN DESC;
+    `);
+
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      // Tìm đơn hàng có cùng MADONHANG
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        // Nếu chưa có đơn hàng này, tạo mới
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [], // Tạo mảng để lưu sản phẩm trong đơn hàng
+        };
+        orders.push(order); // Thêm đơn hàng vào danh sách
+      }
+
+      // Thêm chi tiết sản phẩm vào mảng sản phẩm của đơn hàng
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    // Trả về kết quả sau khi nhóm thông tin
+    return res.status(200).json({
+      EM: "Lấy danh sách đơn hàng thành công",
+      EC: 1,
+      DT: orders,
+    });
+  } catch (error) {
+    console.error("Error getting don hang:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy thông tin",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+
+const getDON_HANG_DaThanhToan = async (req, res) => {
+  try {
+    const [results] = await connection.execute(`
+      SELECT 
+        d.MADONHANG, 
+        d.MANGUOIDUNG, 
+        d.TRANGTHAI, 
+        d.NGAYTHANHTOAN, 
+        d.DIACHIDONHANG, 
+        d.HINHTHUCTHANHTOAN, 
+        d.TONGTIEN, 
+        u.TENNGUOIDUNG, 
+        u.EMAIL, 
+        u.DIACHI, 
+        u.SODIENTHOAI, 
+        u.TRANGTHAINGUOIDUNG, 
+        u.MATKHAU, 
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
+      FROM 
+        DONHANG d
+      LEFT JOIN 
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
+         WHERE TRANGTHAI = "Giao dịch thành công"
+      ORDER BY 
+        d.NGAYTHANHTOAN DESC;
+    `);
+
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      // Tìm đơn hàng có cùng MADONHANG
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        // Nếu chưa có đơn hàng này, tạo mới
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [], // Tạo mảng để lưu sản phẩm trong đơn hàng
+        };
+        orders.push(order); // Thêm đơn hàng vào danh sách
+      }
+
+      // Thêm chi tiết sản phẩm vào mảng sản phẩm của đơn hàng
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    // Trả về kết quả sau khi nhóm thông tin
+    return res.status(200).json({
+      EM: "Lấy danh sách đơn hàng thành công",
+      EC: 1,
+      DT: orders,
+    });
+  } catch (error) {
+    console.error("Error getting don hang:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy thông tin",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+
+// USER
+const getDON_HANGByIDUser = async (req, res) => {
+  try {
+    const { userId } = req.params; // Lấy MANGUOIDUNG từ tham số URL (userId)
+
+    // Cập nhật câu lệnh SQL để lọc theo MANGUOIDUNG
+    const [results] = await connection.execute(
+      `
+      SELECT 
+        d.MADONHANG, 
+        d.MANGUOIDUNG, 
+        d.TRANGTHAI, 
+        d.NGAYTHANHTOAN, 
+        d.DIACHIDONHANG, 
+        d.HINHTHUCTHANHTOAN, 
+        d.TONGTIEN, 
+        u.TENNGUOIDUNG, 
+        u.EMAIL, 
+        u.DIACHI, 
+        u.SODIENTHOAI, 
+        u.TRANGTHAINGUOIDUNG, 
+        u.MATKHAU, 
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
+      FROM 
+        DONHANG d
+      LEFT JOIN 
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
+      WHERE 
+        d.MANGUOIDUNG = ?  -- Lọc đơn hàng theo MANGUOIDUNG
+      ORDER BY 
+        d.NGAYTHANHTOAN DESC;
+    `,
+      [userId]
+    ); // Truyền MANGUOIDUNG vào câu lệnh SQL
+
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [],
+        };
+        orders.push(order);
+      }
+
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    return res.status(200).json({
+      EM: "Lấy danh sách đơn hàng thành công",
+      EC: 1,
+      DT: orders,
+    });
+  } catch (error) {
+    console.error("Error getting don hang:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy thông tin",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+
+const getDON_HANG_DangXuLyByIDUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const [results] = await connection.execute(
+      `
+      SELECT 
+        d.MADONHANG, 
+        d.MANGUOIDUNG, 
+        d.TRANGTHAI, 
+        d.NGAYTHANHTOAN, 
+        d.DIACHIDONHANG, 
+        d.HINHTHUCTHANHTOAN, 
+        d.TONGTIEN, 
+        u.TENNGUOIDUNG, 
+        u.EMAIL, 
+        u.DIACHI, 
+        u.SODIENTHOAI, 
+        u.TRANGTHAINGUOIDUNG, 
+        u.MATKHAU, 
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
+      FROM 
+        DONHANG d
+      LEFT JOIN 
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
+        WHERE TRANGTHAI = "Đang chờ thanh toán"
+        AND 
+        d.MANGUOIDUNG = ?  -- Lọc đơn hàng theo MANGUOIDUNG
+      ORDER BY 
+        d.NGAYTHANHTOAN DESC;
+    `,
+      [userId]
+    );
+
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      // Tìm đơn hàng có cùng MADONHANG
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        // Nếu chưa có đơn hàng này, tạo mới
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [], // Tạo mảng để lưu sản phẩm trong đơn hàng
+        };
+        orders.push(order); // Thêm đơn hàng vào danh sách
+      }
+
+      // Thêm chi tiết sản phẩm vào mảng sản phẩm của đơn hàng
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    // Trả về kết quả sau khi nhóm thông tin
+    return res.status(200).json({
+      EM: "Lấy danh sách đơn hàng thành công",
+      EC: 1,
+      DT: orders,
+    });
+  } catch (error) {
+    console.error("Error getting don hang:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy thông tin",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+
+const getDON_HANG_DaHuyByIDUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const [results] = await connection.execute(
+      `
+      SELECT 
+        d.MADONHANG, 
+        d.MANGUOIDUNG, 
+        d.TRANGTHAI, 
+        d.NGAYTHANHTOAN, 
+        d.DIACHIDONHANG, 
+        d.HINHTHUCTHANHTOAN, 
+        d.TONGTIEN, 
+        u.TENNGUOIDUNG, 
+        u.EMAIL, 
+        u.DIACHI, 
+        u.SODIENTHOAI, 
+        u.TRANGTHAINGUOIDUNG, 
+        u.MATKHAU, 
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
+      FROM 
+        DONHANG d
+      LEFT JOIN 
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
+
+         WHERE TRANGTHAI = "Đã hủy"
+         AND  
+        d.MANGUOIDUNG = ?  -- Lọc đơn hàng theo MANGUOIDUNG
+      ORDER BY 
+        d.NGAYTHANHTOAN DESC;
+    `,
+      [userId]
+    );
+
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      // Tìm đơn hàng có cùng MADONHANG
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        // Nếu chưa có đơn hàng này, tạo mới
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [], // Tạo mảng để lưu sản phẩm trong đơn hàng
+        };
+        orders.push(order); // Thêm đơn hàng vào danh sách
+      }
+
+      // Thêm chi tiết sản phẩm vào mảng sản phẩm của đơn hàng
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    // Trả về kết quả sau khi nhóm thông tin
+    return res.status(200).json({
+      EM: "Lấy danh sách đơn hàng thành công",
+      EC: 1,
+      DT: orders,
+    });
+  } catch (error) {
+    console.error("Error getting don hang:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy thông tin",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
+
+const getDON_HANG_DaThanhToanByIDUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const [results] = await connection.execute(
+      `
+      SELECT 
+        d.MADONHANG, 
+        d.MANGUOIDUNG, 
+        d.TRANGTHAI, 
+        d.NGAYTHANHTOAN, 
+        d.DIACHIDONHANG, 
+        d.HINHTHUCTHANHTOAN, 
+        d.TONGTIEN, 
+        u.TENNGUOIDUNG, 
+        u.EMAIL, 
+        u.DIACHI, 
+        u.SODIENTHOAI, 
+        u.TRANGTHAINGUOIDUNG, 
+        u.MATKHAU, 
+        u.VAITRO,
+        km.CODE AS MA_KHUYENMAI_CODE,
+        km.MOTA AS MA_KHUYENMAI_MOTA,
+        km.HANSUDUNG AS MA_KHUYENMAI_HANSUDUNG,
+        ctdh.IDCHITIETDONHANG, 
+        ctdh.MASANPHAM, 
+        ctdh.GIASP, 
+        ctdh.SOLUONGSP, 
+        ctdh.DANHGIA, 
+        ctdh.BINHLUAN,
+        sp.TENSANPHAM, 
+        sp.MOTA AS SANPHAM_MOTA, 
+        sp.GIA AS SANPHAM_GIA, 
+        
+        sp.HINHANHSANPHAM, 
+        sp.SOLUONG AS SANPHAM_SOLUONG, 
+        sp.TRANGTHAISANPHAM,
+        dsp.TENLOAISANPHAM AS LOAISANPHAM_TEN
+      FROM 
+        DONHANG d
+      LEFT JOIN 
+        NGUOIDUNG u ON d.MANGUOIDUNG = u.MANGUOIDUNG
+      LEFT JOIN 
+        AP_DUNG ad ON d.MADONHANG = ad.MADONHANG
+      LEFT JOIN 
+        KHUYENMAI km ON ad.MAKHUYENMAI = km.MAKHUYENMAI
+      LEFT JOIN 
+        CHITIETDONHANG ctdh ON d.MADONHANG = ctdh.MADONHANG
+      LEFT JOIN 
+        SANPHAM sp ON ctdh.MASANPHAM = sp.MASANPHAM
+      LEFT JOIN 
+        DANHMUCSANPHAM dsp ON sp.MALOAISANPHAM = dsp.MALOAISANPHAM
+         WHERE TRANGTHAI = "Giao dịch thành công" AND  
+        d.MANGUOIDUNG = ?  -- Lọc đơn hàng theo MANGUOIDUNG
+      ORDER BY 
+        d.NGAYTHANHTOAN DESC;
+    `,
+      [userId]
+    );
+
+    // Tạo một đối tượng để nhóm các chi tiết hóa đơn theo MADONHANG
+    const orders = [];
+
+    results.forEach((row) => {
+      // Tìm đơn hàng có cùng MADONHANG
+      let order = orders.find((order) => order.MADONHANG === row.MADONHANG);
+
+      if (!order) {
+        // Nếu chưa có đơn hàng này, tạo mới
+        order = {
+          MADONHANG: row.MADONHANG,
+          MANGUOIDUNG: row.MANGUOIDUNG,
+          TRANGTHAI: row.TRANGTHAI,
+          NGAYTHANHTOAN: row.NGAYTHANHTOAN,
+          DIACHIDONHANG: row.DIACHIDONHANG,
+          HINHTHUCTHANHTOAN: row.HINHTHUCTHANHTOAN,
+          TONGTIEN: row.TONGTIEN,
+          TENNGUOIDUNG: row.TENNGUOIDUNG,
+          EMAIL: row.EMAIL,
+          DIACHI: row.DIACHI,
+          SODIENTHOAI: row.SODIENTHOAI,
+          TRANGTHAINGUOIDUNG: row.TRANGTHAINGUOIDUNG,
+          VAITRO: row.VAITRO,
+          MA_KHUYENMAI_CODE: row.MA_KHUYENMAI_CODE,
+          MA_KHUYENMAI_MOTA: row.MA_KHUYENMAI_MOTA,
+          MA_KHUYENMAI_HANSUDUNG: row.MA_KHUYENMAI_HANSUDUNG,
+          products: [], // Tạo mảng để lưu sản phẩm trong đơn hàng
+        };
+        orders.push(order); // Thêm đơn hàng vào danh sách
+      }
+
+      // Thêm chi tiết sản phẩm vào mảng sản phẩm của đơn hàng
+      order.products.push({
+        IDCHITIETDONHANG: row.IDCHITIETDONHANG,
+        MASANPHAM: row.MASANPHAM,
+        TENSANPHAM: row.TENSANPHAM,
+        SANPHAM_MOTA: row.SANPHAM_MOTA,
+        SANPHAM_GIA: row.SANPHAM_GIA,
+        HINHANHSANPHAM: row.HINHANHSANPHAM,
+        SOLUONGSP: row.SOLUONGSP,
+        DANHGIA: row.DANHGIA,
+        BINHLUAN: row.BINHLUAN,
+        LOAISANPHAM_TEN: row.LOAISANPHAM_TEN,
+      });
+    });
+
+    // Trả về kết quả sau khi nhóm thông tin
+    return res.status(200).json({
+      EM: "Lấy danh sách đơn hàng thành công",
+      EC: 1,
+      DT: orders,
+    });
+  } catch (error) {
+    console.error("Error getting don hang:", error);
+    return res.status(500).json({
+      EM: "Có lỗi xảy ra khi lấy thông tin",
+      EC: 0,
+      DT: [],
+    });
+  }
+};
 module.exports = {
   getDON_HANG,
   createDON_HANG,
@@ -626,4 +1548,12 @@ module.exports = {
   updateOrderStatusCanceled_User,
   updateOrderStatusCanceled,
   updateOrderStatusSuccess,
+  getDON_HANG_DangXuLy,
+  getDON_HANG_DaHuy,
+  getDON_HANG_DaThanhToan,
+  // user
+  getDON_HANGByIDUser,
+  getDON_HANG_DangXuLyByIDUser,
+  getDON_HANG_DaHuyByIDUser,
+  getDON_HANG_DaThanhToanByIDUser,
 };

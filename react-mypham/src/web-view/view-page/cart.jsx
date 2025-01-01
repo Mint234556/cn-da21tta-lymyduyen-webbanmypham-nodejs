@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Grid,
   Divider,
+  TextField,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -40,6 +41,9 @@ const Cart = () => {
       const response = await axios.get(
         `${api}/gio-hang/use/cart-user/${userInfo.MANGUOIDUNG}`
       );
+      // const response_KhuyenMai = await axios.get(
+      //   `${api}/gio-hang/use/cart-user/${userInfo.MANGUOIDUNG}`
+      // );
       if (response.data.EC === 1) {
         setCartItems(response.data.DT);
       }
@@ -66,6 +70,77 @@ const Cart = () => {
       fetchCartItems();
     } catch (error) {
       enqueueSnackbar("Lỗi khi cập nhật số lượng", { variant: "error" });
+    }
+  };
+
+  const [code, setCode] = useState(""); // Lưu mã giảm giá nhập vào
+  const [khuyenMai, setKhuyenMai] = useState(null); // Lưu dữ liệu khuyến mãi
+  useEffect(() => {
+    const calculatedTotal =
+      cartItems.reduce(
+        (total, item) => total + item.GIA * item.SOLUONG_GIOHANG,
+        0
+      ) - (khuyenMai?.SOTIENGIAM || 0);
+
+    setTotalPrice(calculatedTotal); // Cập nhật giá trị vào state
+  }, [cartItems, khuyenMai]); // Theo dõi thay đổi của cartItems và khuyenMai
+  // Xử lý khi người dùng nhập mã giảm giá và tìm kiếm
+  const handleSearch = async () => {
+    if (!code) return;
+
+    setLoading(true);
+
+    try {
+      const response = await axios.get(`${api}/khuyen-mai/${code}`); // Gọi API để tìm khuyến mãi theo mã
+      if (response.data.EC === 1) {
+        enqueueSnackbar(response.data.EM, { variant: "success" });
+        setKhuyenMai(response.data.DT); // Cập nhật khuyến mãi
+      } else {
+        enqueueSnackbar(response.data.EM, { variant: "info" });
+      }
+    } catch (err) {
+      enqueueSnackbar(err.response.data.EM, { variant: "info" });
+    } finally {
+      setLoading(false); // Kết thúc quá trình loading
+    }
+  };
+
+  const [isOpenAddress, setIsOpenAddress] = useState(false);
+  const [addressUser, setAddressUser] = useState("");
+  const [totalPrice, setTotalPrice] = useState(0);
+
+  const handleSummitThanhToan = async () => {
+    if (!addressUser || addressUser === "") {
+      enqueueSnackbar("Vui lòng nhập địa chỉ của bạn !!", { variant: "info" });
+      return;
+    }
+
+    const requestData = {
+      idNguoiDung: userInfo.MANGUOIDUNG,
+      hinhThucThanhToan: "Thanh toán tại nhà",
+      maKhuyenMai: khuyenMai?.MAKHUYENMAI || false,
+      tongTien: totalPrice < 0 ? totalPrice : totalPrice,
+      trangThaiDonHang: "Đang chờ thanh toán",
+      items: cartItems,
+      email: userInfo.EMAIL,
+      DIA_CHI_DON_HANG: addressUser,
+    };
+
+    try {
+      const response = await axios.post(`${api}/don-hang`, requestData);
+      if (response.data.EC == 1) {
+        enqueueSnackbar(response.data.EM, { variant: "success" });
+        fetchCartItems();
+      } else {
+        enqueueSnackbar(response.data.EM || "Đã có lỗi xảy ra!", {
+          variant: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting order:", error);
+      enqueueSnackbar("Lỗi hệ thống, vui lòng thử lại sau!", {
+        variant: "error",
+      });
     }
   };
 
@@ -131,44 +206,204 @@ const Cart = () => {
             </Card>
           ))}
         </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Tổng đơn hàng
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-            <Box display="flex" justifyContent="space-between" mb={2}>
-              <Typography>Tổng số lượng:</Typography>
-              <Typography>{cartItems.length} sản phẩm</Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" mb={2}>
-              <Typography>Thành tiền:</Typography>
-              <Typography fontWeight="bold">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(
-                  cartItems.reduce(
-                    (total, item) => total + item.GIA * item.SOLUONG_GIOHANG,
-                    0
-                  )
+        {isOpenAddress ? (
+          <>
+            {" "}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 2 }}>
+                {" "}
+                <Typography variant="h6" gutterBottom>
+                  Tổng đơn hàng
+                </Typography>
+                <Divider sx={{ my: 2 }} />{" "}
+                <TextField
+                  margin="dense"
+                  label="Mã giảm giá"
+                  name="CODE"
+                  value={code} // Hiển thị giá trị trong ô input
+                  onChange={(e) => setCode(e.target.value)} // Cập nhật giá trị khi người dùng nhập
+                  fullWidth
+                />
+                <Button
+                  onClick={handleSearch}
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                >
+                  Áp dụng
+                </Button>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  mb={2}
+                  mt={2}
+                >
+                  {" "}
+                  <Typography>Tổng số lượng:</Typography>
+                  <Typography>{cartItems.length} loại sản phẩm</Typography>
+                </Box>{" "}
+                <Box display="flex" justifyContent="space-between" mb={2}>
+                  <Typography>Tiền sản phẩm</Typography>
+                  <Typography fontWeight="bold">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(
+                      cartItems.reduce(
+                        (total, item) =>
+                          total + item.GIA * item.SOLUONG_GIOHANG,
+                        0
+                      )
+                    )}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" mb={2}>
+                  <Typography>Số tiền giảm</Typography>
+                  <Typography fontWeight="bold">
+                    {khuyenMai?.MOTA === "Chưa được sử dụng" ? (
+                      <>
+                        {" "}
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(khuyenMai.SOTIENGIAM)}
+                      </>
+                    ) : (
+                      <>
+                        {new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                        }).format(0)}
+                      </>
+                    )}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" mb={2}>
+                  <Typography>Thành tiền:</Typography>
+                  <Typography fontWeight="bold">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(
+                      Math.max(
+                        cartItems.reduce(
+                          (total, item) =>
+                            total + item.GIA * item.SOLUONG_GIOHANG,
+                          0
+                        ) - (khuyenMai?.SOTIENGIAM || 0),
+                        0 // Đảm bảo không bị âm
+                      )
+                    )}
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => setIsOpenAddress(false)}
+                  sx={{
+                    mt: 2,
+                    backgroundColor: "#ad1457",
+                    "&:hover": { backgroundColor: "#880e4f" },
+                  }}
+                >
+                  Nhập địa chỉ
+                </Button>
+              </Card>
+            </Grid>
+          </>
+        ) : (
+          <>
+            {" "}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ p: 2 }}>
+                {" "}
+                <Typography variant="h6" gutterBottom>
+                  Tổng đơn hàng
+                </Typography>
+                <Divider sx={{ my: 2 }} />{" "}
+                <TextField
+                  margin="dense"
+                  label="Địa chỉ của bạn"
+                  name="DIACHI"
+                  value={addressUser} // Hiển thị giá trị trong ô input
+                  onChange={(e) => setAddressUser(e.target.value)} // Cập nhật giá trị khi người dùng nhập
+                  fullWidth
+                />
+                {userInfo?.DIACHI ? (
+                  <>
+                    {" "}
+                    <Button
+                      onClick={() => setAddressUser(userInfo.DIACHI)}
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                    >
+                      Dùng địa chỉ tài khoản
+                    </Button>
+                  </>
+                ) : (
+                  false
                 )}
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{
-                mt: 2,
-                backgroundColor: "#ad1457",
-                "&:hover": { backgroundColor: "#880e4f" },
-              }}
-            >
-              Tiến hành thanh toán
-            </Button>
-          </Card>
-        </Grid>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  mb={2}
+                  mt={2}
+                >
+                  {" "}
+                  <Typography>Tổng số lượng:</Typography>
+                  <Typography>{cartItems.length} loại sản phẩm</Typography>
+                </Box>{" "}
+                <Box display="flex" justifyContent="space-between" mb={2}>
+                  <Typography>Thành tiền:</Typography>
+                  <Typography fontWeight="bold">
+                    {new Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(
+                      Math.max(
+                        cartItems.reduce(
+                          (total, item) =>
+                            total + item.GIA * item.SOLUONG_GIOHANG,
+                          0
+                        ) - (khuyenMai?.SOTIENGIAM || 0),
+                        0 // Đảm bảo không bị âm
+                      )
+                    )}
+                  </Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between" mb={2}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={() => setIsOpenAddress(true)}
+                    sx={{
+                      width: "48%",
+                      mt: 2,
+                      backgroundColor: "#ad1457",
+                      "&:hover": { backgroundColor: "#880e4f" },
+                    }}
+                  >
+                    Quay về
+                  </Button>{" "}
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={handleSummitThanhToan}
+                    sx={{
+                      width: "48%",
+                      mt: 2,
+                      backgroundColor: "#28a745",
+                      "&:hover": { backgroundColor: "#1b742f" },
+                    }}
+                  >
+                    Mua hàng
+                  </Button>{" "}
+                </Box>
+              </Card>
+            </Grid>
+          </>
+        )}
       </Grid>
     </Box>
   );

@@ -24,6 +24,7 @@ const RegisterForm = () => {
   const steps = ["Sent OTP", "Verify OTP"];
   const [isOpenOtp, setIsOpenOtp] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+
   const [email, setEmail] = useState("");
   const [formData, setFormData] = useState({
     email: "",
@@ -31,6 +32,7 @@ const RegisterForm = () => {
     fullName: "",
     phone: "",
     address: "",
+    confirmPassword: "",
   });
   const [isChecked, setIsChecked] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -45,14 +47,17 @@ const RegisterForm = () => {
 
   const handleRegister = async () => {
     try {
-      const { email, password, fullName, phone } = formData;
+      const { email, password, fullName, phone, confirmPassword } = formData;
 
       // Kiểm tra thông tin bắt buộc
       if (!email || !password || !fullName || !phone) {
         setErrorMessage("Vui lòng điền đầy đủ thông tin bắt buộc");
         return;
       }
-
+      if (confirmPassword !== password) {
+        enqueueSnackbar("Mật khẩu không khớp", { variant: "error" });
+        return;
+      }
       // Reset thông báo
       setErrorMessage("");
       setSuccessMessage("");
@@ -83,10 +88,14 @@ const RegisterForm = () => {
       setErrorMessage("Đã xảy ra lỗi khi đăng ký, vui lòng thử lại.");
     }
   };
-  const [otp, setOtp] = useState("");
-  const [countdown, setCountdown] = useState(0); // State to track countdown time
-  // Handle OTP send
 
+  const handleClickOpen = () => {
+    if (formData.confirmPassword !== formData.password) {
+      enqueueSnackbar("Mật khẩu không khớp", { variant: "error" });
+      return;
+    }
+    setIsOpenOtp(true);
+  };
   return (
     <>
       {!isOpenOtp ? (
@@ -182,7 +191,17 @@ const RegisterForm = () => {
               type="password"
               sx={{ marginBottom: 2 }}
             />
-
+            {/* Trường Nhập Lại Mật khẩu */}
+            <TextField
+              label="Nhập Lại Mật khẩu"
+              variant="outlined"
+              fullWidth
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              type="password"
+              sx={{ marginBottom: 2 }}
+            />
             {/* Trường Số điện thoại */}
             <TextField
               label="Số điện thoại"
@@ -220,7 +239,7 @@ const RegisterForm = () => {
                 variant="contained"
                 fullWidth
                 color="primary"
-                onClick={() => setIsOpenOtp(true)}
+                onClick={handleClickOpen}
                 disabled={
                   !formData.email || !formData.password || !formData.fullName
                 }
